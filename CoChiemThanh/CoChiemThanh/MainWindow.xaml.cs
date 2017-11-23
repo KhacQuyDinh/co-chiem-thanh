@@ -40,12 +40,12 @@ namespace CoChiemThanh
         }
 
         //determine current turn
-        public PlayerTurn currentPlayerTurn = PlayerTurn.none;
-        public enum PlayerTurn : int
+        public Player currentPlayer = Player.none;
+        public enum Player : int
         {
             none = -1,
-            human_turn = 1,
-            machine_turn = 2
+            human = 1,
+            machine = 2
         }
 
         //player string desc
@@ -78,8 +78,24 @@ namespace CoChiemThanh
         public Piece L_machine = new Piece(7, 3, " L");
         public Piece M_machine = new Piece(7, 7, " M");
 
+        public List<Piece> listMachineHorse = new List<Piece>();
+        public List<Piece> listHumanHorse = new List<Piece>();
+
+        public void initListHorses()
+        {
+            //list human horses
+            listHumanHorse.Add(O_human);
+            listHumanHorse.Add(P_human);
+            listHumanHorse.Add(Q_human);
+
+            //list machine horses
+            listMachineHorse.Add(K_machine);
+            listMachineHorse.Add(L_machine);
+            listMachineHorse.Add(M_machine);
+        }
+
         public string[,] boardgame = new string[max_row, max_col];
-        public int[,] eBoardgame = new int[max_row, max_col];
+        public int[,] EBoardgame = new int[max_row, max_col];
 
         //reset boardgame
         public void ResetBoardGame()
@@ -106,7 +122,7 @@ namespace CoChiemThanh
 
         }
 
-        //calculate eboard...
+        //calculate eboard using current player other funcs
         public void CalEBoard()
         {
             //reset value to zero
@@ -114,11 +130,41 @@ namespace CoChiemThanh
             {
                 for (int cl = 0; cl < max_col; cl++)
                 {
-                    eBoardgame[rw, cl] = 0;
+                    EBoardgame[rw, cl] = 0;
                 }
             }
 
+            //...
+            Player opponent = currentPlayer == Player.human ? Player.machine : Player.human;
+            List<string> posibleMoves = getPossibleMoves(currentPlayer);
+            foreach (string move in posibleMoves)
+            {
+                int defenceScore = 0;
+                int attackScore = 0;
+                int row_1 = mapId[move[0]];
+                int col_1 = mapId[move[1]];
+                int row_2 = mapId[move[2]];
+                int col_2 = mapId[move[3]];
 
+                //first move and checkmate opponent
+                if (EvaluateRate.num_move == 1
+                    && IsCheckmated(row_1, col_1, row_2, col_2, opponent)) attackScore += EvaluateRate.st_nonblock_checkmate;
+                //first move and move to opponent plane
+                if (EvaluateRate.num_move == 1
+                    && IsInOpptPlane(row_2, col_2, currentPlayer)) attackScore += EvaluateRate.st_moving_to_plane;
+                //absolute block opponent who is checkmating
+                if (IsCheckmated(currentPlayer) && !IsCheckmated(row_1, col_1, row_2, col_2, currentPlayer)) defenceScore += EvaluateRate.opponent_st_abs_block_checkmate;
+                //reduce block(checkmated) point of opponent but can still be checkmated
+                int reducedCheckmatedAmount = GetNumReduceBlockPoint(row_1, col_1, row_2, col_2, currentPlayer);
+                if (reducedCheckmatedAmount > 0) defenceScore += reducedCheckmatedAmount * EvaluateRate.opponent_st_nonabs_block_checkmate;
+                //block all path move to plane for one step opponent moves
+                if (IsFirstAbsBlockToPlane(row_1, col_1, row_2, col_2, currentPlayer)) defenceScore += EvaluateRate.abs_st_block_moving_to_plane;
+                //reduce path move to plane for one step opponent moves
+                int reducedPlaneAmount = GetNumReduceBlockToPlane(row_1, col_1, row_2, col_2, currentPlayer);
+                if (reducedPlaneAmount > 0) defenceScore += reducedPlaneAmount * EvaluateRate.nonabs_st_block_moving_to_plane;
+                //opponent will checkmate after one move.
+                //...
+            }
         }
 
         public void PrintBoard()
@@ -143,12 +189,12 @@ namespace CoChiemThanh
             if (rw_1 < 0 || rw_1 >= max_row || col_1 < 0 || col_1 >= max_col) return false;
 
             //guarantee the position move to is valid place. Cannot move to oppenent horse because it cannot be eaten.
-            if (((currentPlayerTurn == PlayerTurn.human_turn)
+            if (((currentPlayer == Player.human)
                 && !boardgame[rw_1, col_1].Equals(plane_machine.Label)
                 && !boardgame[rw_1, col_1].Equals(wall_machine.Label)
                 && !boardgame[rw_1, col_1].Equals(empty_str))
                 ||
-                ((currentPlayerTurn == PlayerTurn.machine_turn)
+                ((currentPlayer == Player.machine)
                 && !boardgame[rw_1, col_1].Equals(plane_human.Label)
                 && !boardgame[rw_1, col_1].Equals(wall_human.Label))
                 && !boardgame[rw_1, col_1].Equals(empty_str))
@@ -157,8 +203,8 @@ namespace CoChiemThanh
             }
 
             //guarantee not be checkmated after moving a horse to there
-            //currentPlayerTurn == PlayerTurn.machine_turn to sure not get benefit for opponent but if training for two machine fight each other, we need del it.            
-            if (currentPlayerTurn == PlayerTurn.machine_turn)
+            //currentPlayer == Player.machine to sure not get benefit for opponent but if training for two machine fight each other, we need del it.            
+            if (currentPlayer == Player.machine)
             {
                 bool isCheckMated;
                 string originLabel = boardgame[rw_0, col_0];
@@ -173,7 +219,7 @@ namespace CoChiemThanh
                     boardgame[rw_0, col_0] = empty_str;
                 }
 
-                isCheckMated = IsCheckmated(currentPlayerTurn);
+                isCheckMated = IsCheckmated(currentPlayer);
 
                 boardgame[rw_1, col_1] = desLabel;
                 boardgame[rw_0, col_0] = originLabel;
@@ -183,11 +229,11 @@ namespace CoChiemThanh
 
             //if the horse from the plane of opponent then we don't need guarantee for 
             //the horse be or not be blocked
-            if ((currentPlayerTurn == PlayerTurn.human_turn
+            if ((currentPlayer == Player.human
                 && rw_0 == plane_machine.Row
                 && col_0 == plane_machine.Col)
                 ||
-                (currentPlayerTurn == PlayerTurn.machine_turn
+                (currentPlayer == Player.machine
                 && rw_0 == plane_human.Row
                 && col_0 == plane_human.Col))
             {
@@ -225,63 +271,348 @@ namespace CoChiemThanh
             return false;
         }
 
-        private bool IsCheckmated(PlayerTurn PlayerTurn)
+        /// <summary>
+        /// check whether machine or human be checkmated correspond with player
+        /// </summary>        
+        public bool IsCheckmated(Player player)
         {
-            if (PlayerTurn == PlayerTurn.human_turn)
-            {
-                if (Math.Abs(wall_machine.Row - K_machine.Row) == 1 && Math.Abs(wall_machine.Col - K_machine.Col) == 2
-                    || Math.Abs(wall_machine.Row - K_machine.Row) == 2 && Math.Abs(wall_machine.Col - K_machine.Col) == 1
-                    || Math.Abs(wall_machine.Row - L_machine.Row) == 1 && Math.Abs(wall_machine.Col - L_machine.Col) == 2
-                    || Math.Abs(wall_machine.Row - L_machine.Row) == 2 && Math.Abs(wall_machine.Col - L_machine.Col) == 1
-                    || Math.Abs(wall_machine.Row - M_machine.Row) == 1 && Math.Abs(wall_machine.Col - M_machine.Col) == 2
-                    || Math.Abs(wall_machine.Row - M_machine.Row) == 2 && Math.Abs(wall_machine.Col - M_machine.Col) == 1)
-                {
-                    return true;
-                }
-            }
-            else if (PlayerTurn == PlayerTurn.machine_turn)
-            {
-                if (Math.Abs(wall_human.Row - O_human.Row) == 1 && Math.Abs(wall_human.Col - O_human.Col) == 2
-                    || Math.Abs(wall_human.Row - O_human.Row) == 2 && Math.Abs(wall_human.Col - O_human.Col) == 1
-                    || Math.Abs(wall_human.Row - P_human.Row) == 1 && Math.Abs(wall_human.Col - P_human.Col) == 2
-                    || Math.Abs(wall_human.Row - P_human.Row) == 2 && Math.Abs(wall_human.Col - P_human.Col) == 1
-                    || Math.Abs(wall_human.Row - Q_human.Row) == 1 && Math.Abs(wall_human.Col - Q_human.Col) == 2
-                    || Math.Abs(wall_human.Row - Q_human.Row) == 2 && Math.Abs(wall_human.Col - Q_human.Col) == 1)
-                {
-                    return true;
-                }
-            }
-            return false;
+            return GetListFirstBlockCheckmate(player).Count != 0;
         }
 
-        //check status of current gameboard: win - lose - raw
+        /// <summary>
+        /// check whether machine or human be checkmated correspond to player
+        /// after player move to a specific pos (row,col)
+        /// </summary>        
+        public bool IsCheckmated(int row_1, int col_1, int row_2, int col_2, Player player)
+        {
+            string des = boardgame[row_2, col_2];            
+            boardgame[row_2, col_2] = boardgame[row_1, col_1];
+
+            if (player == Player.machine)
+            {
+                if (row_1 == plane_human.Row && col_1 == plane_human.Col) boardgame[row_1, col_1] = plane_human.Label;
+                else boardgame[row_1, col_1] = empty_str;                
+            } 
+            else if (player == Player.human)
+            {
+                if (row_1 == plane_machine.Row && col_1 == plane_machine.Col) boardgame[row_1, col_1] = plane_machine.Label;
+                else boardgame[row_1, col_1] = empty_str;
+            }
+            
+            bool isCheckmated = GetListFirstBlockCheckmate(player).Count != 0;
+            boardgame[row_1, col_1] = boardgame[row_2, col_2];
+            boardgame[row_2, col_2] = des;
+
+            return isCheckmated;
+        }
+
+        /// <summary>
+        /// check whether player after move to the pos (row_2, col_2) can block all of opponent moves to its plane
+        /// after player move to a specific pos (row,col)
+        /// </summary>        
+        public bool IsFirstAbsBlockToPlane(int row_1, int col_1, int row_2, int col_2, Player player)
+        {
+            string des = boardgame[row_2, col_2];
+            boardgame[row_2, col_2] = boardgame[row_1, col_1];
+
+            if (player == Player.machine)
+            {
+                if (row_1 == plane_human.Row && col_1 == plane_human.Col) boardgame[row_1, col_1] = plane_human.Label;
+                else boardgame[row_1, col_1] = empty_str;
+            }
+            else if (player == Player.human)
+            {
+                if (row_1 == plane_machine.Row && col_1 == plane_machine.Col) boardgame[row_1, col_1] = plane_machine.Label;
+                else boardgame[row_1, col_1] = empty_str;
+            }
+
+            bool isAbsBlock = GetListFirstBlockToPlane(player).Count == 0;
+            boardgame[row_1, col_1] = boardgame[row_2, col_2];
+            boardgame[row_2, col_2] = des;
+
+            return isAbsBlock;
+        }
+
+        /// <summary>
+        /// check whether player after move to the pos (row_2, col_2) can block all of opponent moves to its plane
+        /// after player move to a specific pos (row,col)
+        /// </summary>        
+        public int GetNumReduceBlockToPlane(int row_1, int col_1, int row_2, int col_2, Player player)
+        {
+            //cal firstNumBlockPlane
+            int firstNumBlockPlane = GetListFirstBlockToPlane(player).Count;
+
+            string des = boardgame[row_2, col_2];
+            boardgame[row_2, col_2] = boardgame[row_1, col_1];
+
+            if (player == Player.machine)
+            {
+                if (row_1 == plane_human.Row && col_1 == plane_human.Col) boardgame[row_1, col_1] = plane_human.Label;
+                else boardgame[row_1, col_1] = empty_str;
+            }
+            else if (player == Player.human)
+            {
+                if (row_1 == plane_machine.Row && col_1 == plane_machine.Col) boardgame[row_1, col_1] = plane_machine.Label;
+                else boardgame[row_1, col_1] = empty_str;
+            }
+
+            int secondNumBlockPlane = GetListFirstBlockToPlane(player).Count;
+            boardgame[row_1, col_1] = boardgame[row_2, col_2];
+            boardgame[row_2, col_2] = des;
+
+            return firstNumBlockPlane - secondNumBlockPlane;
+        }
+
+        public int GetNumReduceBlockPoint(int row_1, int col_1, int row_2, int col_2, Player player)
+        {
+            //cal firstNumCheckmatedPoint
+            int firstNumBlockPoint = GetListFirstBlockCheckmate(player).Count;
+
+            string des = boardgame[row_2, col_2];
+            boardgame[row_2, col_2] = boardgame[row_1, col_1];
+
+            if (player == Player.machine)
+            {
+                if (row_1 == plane_human.Row && col_1 == plane_human.Col) boardgame[row_1, col_1] = plane_human.Label;
+                else boardgame[row_1, col_1] = empty_str;
+            }
+            else if (player == Player.human)
+            {
+                if (row_1 == plane_machine.Row && col_1 == plane_machine.Col) boardgame[row_1, col_1] = plane_machine.Label;
+                else boardgame[row_1, col_1] = empty_str;
+            }
+           
+            //cal secondNumBlockPoint
+            int secondNumBlockPoint = GetListFirstBlockCheckmate(player).Count;
+
+            boardgame[row_1, col_1] = boardgame[row_2, col_2];
+            boardgame[row_2, col_2] = des;
+
+            return firstNumBlockPoint - secondNumBlockPoint;
+        }
+
+        /// <summary>
+        /// get list block checkmate for the player
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns></returns>
+        private List<string> GetListFirstBlockCheckmate(Player player)
+        {
+            List<string> listStBlockCheckmate = new List<string>();
+            if (player == Player.human)
+            {
+                foreach (Piece horse in listMachineHorse)
+                {
+                    if (Math.Abs(horse.Row - wall_human.Row) == 1)                        
+                    {
+                        if (horse.Col - wall_human.Col == -2 
+                            && boardgame[wall_human.Row, wall_human.Col - 1].Equals(empty_str)) listStBlockCheckmate.Add("" + wall_human.Row + (wall_human.Col - 1));
+                        else if (horse.Col - wall_human.Col == 2
+                            && boardgame[wall_human.Row, wall_human.Col + 1].Equals(empty_str)) listStBlockCheckmate.Add("" + wall_human.Row + (wall_human.Col + 1));
+                    } 
+                    else if (Math.Abs(horse.Row - wall_human.Row) == 2
+                        && Math.Abs(horse.Col - wall_human.Col) == 1
+                        && boardgame[wall_human.Row + 1, wall_human.Col].Equals(empty_str)) listStBlockCheckmate.Add("" + (wall_human.Row + 1) + wall_human.Col);                   
+                }
+            }
+            else if (player == Player.machine)
+            {
+                foreach (Piece horse in listHumanHorse)
+                {
+                    if (Math.Abs(horse.Row - wall_machine.Row) == 1)
+                    {
+                        if (horse.Col - wall_human.Col == -2
+                            && boardgame[wall_human.Row, wall_human.Col - 1].Equals(empty_str)) listStBlockCheckmate.Add("" + wall_human.Row + (wall_human.Col - 1));
+                        else if (horse.Col - wall_human.Col == 2
+                            && boardgame[wall_human.Row, wall_human.Col + 1].Equals(empty_str)) listStBlockCheckmate.Add("" + wall_human.Row + (wall_human.Col + 1));
+                    }
+                    else if (Math.Abs(horse.Row - wall_human.Row) == 2
+                        && Math.Abs(horse.Col - wall_human.Col) == 1
+                        && boardgame[wall_human.Row - 1, wall_human.Col].Equals(empty_str)) listStBlockCheckmate.Add("" + (wall_human.Row - 1) + wall_human.Col);
+                }
+            }
+            return listStBlockCheckmate;
+        }
+
+        /// <summary>
+        /// get list move to the player plane in one more step
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns></returns>
+        private List<string> GetListFirstBlockToPlane(Player player)
+        {
+            List<string> listStBlockToPlane = new List<string>();
+            if (player == Player.human)
+            {
+                foreach (Piece horse in listMachineHorse)
+                {
+                    if (Math.Abs(horse.Row - plane_human.Row) == 1)
+                    {
+                        if (horse.Col - plane_human.Col == -2
+                            && boardgame[plane_human.Row, plane_human.Col - 1].Equals(empty_str)) listStBlockToPlane.Add("" + plane_human.Row + (plane_human.Col - 1));
+                        else if (horse.Col - plane_human.Col == 2
+                            && boardgame[plane_human.Row, plane_human.Col + 1].Equals(empty_str)) listStBlockToPlane.Add("" + plane_human.Row + (plane_human.Col + 1));
+                    }
+                    else if (Math.Abs(horse.Row - plane_human.Row) == 2
+                        && Math.Abs(horse.Col - plane_human.Col) == 1
+                        && boardgame[plane_human.Row + 1, plane_human.Col].Equals(empty_str)) listStBlockToPlane.Add("" + (plane_human.Row + 1) + plane_human.Col);
+                }
+            }
+            else if (player == Player.machine)
+            {
+                foreach (Piece horse in listHumanHorse)
+                {
+                    if (Math.Abs(horse.Row - plane_machine.Row) == 1)
+                    {
+                        if (horse.Col - plane_human.Col == -2
+                            && boardgame[plane_human.Row, plane_human.Col - 1].Equals(empty_str)) listStBlockToPlane.Add("" + plane_human.Row + (plane_human.Col - 1));
+                        else if (horse.Col - plane_human.Col == 2
+                            && boardgame[plane_human.Row, plane_human.Col + 1].Equals(empty_str)) listStBlockToPlane.Add("" + plane_human.Row + (plane_human.Col + 1));
+                    }
+                    else if (Math.Abs(horse.Row - plane_human.Row) == 2
+                        && Math.Abs(horse.Col - plane_human.Col) == 1
+                        && boardgame[plane_human.Row - 1, plane_human.Col].Equals(empty_str)) listStBlockToPlane.Add("" + (plane_human.Row - 1) + plane_human.Col);
+                }
+            }
+            return listStBlockToPlane;
+        }
+
+
+        /// <summary>
+        /// get list block checkmate for the player if the opponent checkmate in one more move
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns></returns>
+        //public List<string> GetListSecondBlockCheckmate(Player player)
+        //{
+        //    List<string> listSecondCheckmate = new List<string>();
+        //    if (player == Player.human)
+        //    {
+        //        foreach (Piece horse in listMachineHorse)
+        //        {
+        //            if (Math.Abs(horse.Row - wall_human.Row) == 1)
+        //            {
+        //                if (horse.Col - wall_human.Col == -2) listStBlockCheckmate.Add("" + wall_human.Row + (wall_human.Col - 1));
+        //                else if (horse.Col - wall_human.Col == 2) listStBlockCheckmate.Add("" + wall_human.Row + (wall_human.Col + 1));
+        //            }
+        //            else if (horse.Row - wall_human.Row == 2
+        //                && Math.Abs(horse.Col - wall_human.Col) == 1) listStBlockCheckmate.Add("" + (wall_human.Row + 1) + wall_human.Col);
+        //        }
+        //    }
+        //    else if (player == Player.machine)
+        //    {
+        //        foreach (Piece horse in listHumanHorse)
+        //        {
+        //            if (Math.Abs(horse.Row - wall_machine.Row) == 1)
+        //            {
+        //                if (horse.Col - wall_machine.Col == -2) listStBlockCheckmate.Add("" + wall_machine.Row + (wall_machine.Col - 1));
+        //                else if (horse.Col - wall_machine.Col == 2) listStBlockCheckmate.Add("" + wall_machine.Row + (wall_machine.Col + 1));
+        //            }
+        //            else if (Math.Abs(horse.Row - wall_machine.Row) == 2
+        //                && Math.Abs(horse.Col - wall_machine.Col) == 1) listStBlockCheckmate.Add("" + (wall_machine.Row - 1) + wall_machine.Col);
+        //        }
+        //    }
+        //    return listStBlockCheckmate;
+        //}
+
+        /// <summary>
+        /// check how many opponent's horse will be blocked after player move its horse to a specific position (row,col)
+        /// </summary>
+        /// <param name = "row" > row </ param >
+        /// < param name="col">column</param>
+        /// <param name = "player" > player who move the horse</param>
+        /// <returns></returns>
+        private int CountBlockOpponent(int row, int col, Player player)
+        {
+            int numBlockedOpptHorse = 0;
+
+            if (player == Player.human)
+            {
+                foreach (Piece horse in listMachineHorse)
+                {
+                    if (col == horse.Col)
+                    {
+                        if (row - horse.Row == 1 && max_row - horse.Row > 2) numBlockedOpptHorse++;
+                        else if (row - horse.Row == -1 && horse.Row > 1) numBlockedOpptHorse++;
+                    }
+                    else if (row == horse.Row)
+                    {
+                        if (col - horse.Col == 1 && max_col - horse.Col > 2) numBlockedOpptHorse++;
+                        else if (col - horse.Col == -1 && horse.Col > 1) numBlockedOpptHorse++;
+                    }
+                }
+            }
+            else if (player == Player.machine)
+            {
+                foreach (Piece horse in listHumanHorse)
+                {
+                    if (col == horse.Col)
+                    {
+                        if (row - horse.Row == 1 && max_row - horse.Row > 2) numBlockedOpptHorse++;
+                        else if (row - horse.Row == -1 && horse.Row > 1) numBlockedOpptHorse++;
+                    }
+                    else if (row == horse.Row)
+                    {
+                        if (col - horse.Col == 1 && max_col - horse.Col > 2) numBlockedOpptHorse++;
+                        else if (col - horse.Col == -1 && horse.Col > 1) numBlockedOpptHorse++;
+                    }
+                }
+            }
+
+            return numBlockedOpptHorse;
+        }
+
+        /// <summary>
+        /// check whether a player move its horse to a specific pos (row,col) could be in opponent plane or not
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="col"></param>
+        /// <param name="player"></param>
+        /// <returns></returns>
+        public bool IsInOpptPlane(int row, int col, Player player)
+        {
+            if (player == Player.machine)
+            {
+                return row == plane_human.Row && col == plane_human.Col;
+            }
+            else if (player == Player.human)
+            {
+                return row == plane_machine.Row && col == plane_machine.Col;
+            }
+
+            return false;
+        }
+        
+        /// <summary>
+        /// check status of current gameboard: win - lose - raw
+        /// </summary>        
         public int CheckGameBoard()
         {
             if (O_human.Col == wall_machine.Col && O_human.Row == wall_machine.Row
                || P_human.Col == wall_machine.Col && P_human.Row == wall_machine.Row
                || Q_human.Col == wall_machine.Col && Q_human.Row == wall_machine.Row)
             {
-                if (currentPlayerTurn == PlayerTurn.machine_turn) return lose_number;
-                if (currentPlayerTurn == PlayerTurn.human_turn) return win_number;
+                if (currentPlayer == Player.machine) return lose_number;
+                if (currentPlayer == Player.human) return win_number;
             }
 
             if (K_machine.Col == wall_human.Col && K_machine.Row == wall_human.Row
                 || M_machine.Col == wall_human.Col && M_machine.Row == wall_human.Row
                 || L_machine.Col == wall_human.Col && L_machine.Row == wall_human.Row)
             {
-                if (currentPlayerTurn == PlayerTurn.machine_turn) return win_number;
-                if (currentPlayerTurn == PlayerTurn.human_turn) return lose_number;
+                if (currentPlayer == Player.machine) return win_number;
+                if (currentPlayer == Player.human) return lose_number;
             }
 
-            if (getPossibleMoves(PlayerTurn.human_turn).Count == 0
-                && getPossibleMoves(PlayerTurn.machine_turn).Count == 0) return raw_number;
+            if (getPossibleMoves(Player.human).Count == 0
+                && getPossibleMoves(Player.machine).Count == 0) return raw_number;
 
             return live_game_number;
         }
 
         public string GetStatusMsg(int status)
         {
-            string currentPlayerStr = (currentPlayerTurn == PlayerTurn.human_turn) ? player_human_str : player_machine_str;
+            string currentPlayerStr = (currentPlayer == Player.human) ? player_human_str : player_machine_str;
 
             if (status == raw_number) return "Hoà";
             if (status == win_number) return currentPlayerStr + " thắng";
@@ -314,12 +645,12 @@ namespace CoChiemThanh
 
         /// <summary>
         /// prepare for generateMove and getFinalMove
-        /// <param name="PlayerTurn"></param>
+        /// <param name="Player"></param>
         /// </summary>        
-        public string GetMachineMove(PlayerTurn PlayerTurn)
+        public string GetMachineMove(Player player)
         {
             //determine getMove for which player            
-            bool isMaximizePlayer = (PlayerTurn == PlayerTurn.machine_turn) ? true : false;
+            bool isMaximizePlayer = (player == Player.machine) ? true : false;
             int depth = 0;
             Alpha alpha = new Alpha();
             Beta beta = new Beta();
@@ -333,11 +664,11 @@ namespace CoChiemThanh
         /// </summary>
         private int GenerateMove(string node, int depth, bool isMaximizePlayer, Alpha alpha, Beta beta, ref string finalMove)
         {
-            PlayerTurn PlayerTurn = isMaximizePlayer ? PlayerTurn.machine_turn : PlayerTurn.human_turn;
-            List<string> possibleMoves = getPossibleMoves(PlayerTurn);
+            Player player = isMaximizePlayer ? Player.machine : Player.human;
+            List<string> possibleMoves = getPossibleMoves(player);
             if (depth == max_depth || possibleMoves.Count == 0)
             {
-                return (depth == 0) ? raw_number : eBoardgame[mapId[node[2]], mapId[node[3]]];
+                return (depth == 0) ? raw_number : EBoardgame[mapId[node[2]], mapId[node[3]]];
             }
 
             int bestVal, value;
@@ -414,12 +745,12 @@ namespace CoChiemThanh
         /// <summary>
         /// get all possible moves with condition checkmate
         /// </summary>
-        /// <param name="PlayerTurn">id of the player</param>
+        /// <param name="Player">list posible moves of this player</param>
         /// <returns></returns>
-        private List<string> getPossibleMoves(PlayerTurn PlayerTurn)
+        private List<string> getPossibleMoves(Player player)
         {
             List<string> mlistMove = new List<string>();
-            if (PlayerTurn == PlayerTurn.human_turn)
+            if (player == Player.human)
             {
                 List<Piece> humanHorses = new List<Piece>() { O_human, P_human, Q_human };
                 foreach (Piece p in humanHorses)
@@ -434,7 +765,7 @@ namespace CoChiemThanh
                     if (IsValidMove(p.Row, p.Col, p.Row + 1, p.Col + 2)) mlistMove.Add("" + p.Row + p.Col + (p.Row + 1) + (p.Col + 2));
                 }
             }
-            else if (PlayerTurn == PlayerTurn.machine_turn)
+            else if (player == Player.machine)
             {
                 List<Piece> machineHorses = new List<Piece>() { K_machine, L_machine, M_machine };
                 foreach (Piece p in machineHorses)
@@ -498,7 +829,7 @@ namespace CoChiemThanh
 
             while (true)
             {
-                if (currentPlayerTurn == PlayerTurn.human_turn)
+                if (currentPlayer == Player.human)
                 {
                     string oldMove = "";
                     string move = "";
@@ -515,6 +846,10 @@ namespace CoChiemThanh
                         {
                             boardgame[mapId[move[0]], mapId[move[1]]] = plane_machine.Label;
                         }
+                        else if (mapId[move[0]] == wall_machine.Row && mapId[move[1]] == wall_machine.Col)
+                        {
+                            boardgame[mapId[move[0]], mapId[move[1]]] = wall_machine.Label;
+                        }
                         else
                         {
                             boardgame[mapId[move[0]], mapId[move[1]]] = empty_str;
@@ -527,9 +862,9 @@ namespace CoChiemThanh
                             break;
                         }
                     }
-                    currentPlayerTurn = PlayerTurn.machine_turn;
+                    currentPlayer = Player.machine;
                 }
-                else if (currentPlayerTurn == PlayerTurn.machine_turn)
+                else if (currentPlayer == Player.machine)
                 {
                     string oldMove = "";
                     string move = "";
@@ -538,13 +873,17 @@ namespace CoChiemThanh
                     {
                         do
                         {
-                            move = GetMachineMove(PlayerTurn.machine_turn);
+                            move = GetMachineMove(Player.machine);
                         } while (oldMove.Equals(move));
                         oldMove = move;
                         boardgame[mapId[move[2]], mapId[move[3]]] = boardgame[mapId[move[0]], mapId[move[1]]];
                         if (mapId[move[0]] == plane_human.Row && mapId[move[1]] == plane_human.Col)
                         {
                             boardgame[mapId[move[0]], mapId[move[1]]] = plane_human.Label;
+                        }
+                        else if (mapId[move[0]] == wall_human.Row && mapId[move[1]] == wall_human.Col)
+                        {
+                            boardgame[mapId[move[0]], mapId[move[1]]] = wall_human.Label;
                         }
                         else
                         {
@@ -558,7 +897,7 @@ namespace CoChiemThanh
                             break;
                         }
                     }
-                    currentPlayerTurn = PlayerTurn.human_turn;
+                    currentPlayer = Player.human;
                 }
 
                 //print boardgame
@@ -584,10 +923,10 @@ namespace CoChiemThanh
                 Console.Write("Error command! Please try again: ");
             }
 
-            if (firstPlayerId == (int)PlayerTurn.machine_turn)
+            if (firstPlayerId == (int)Player.machine)
             {
                 //boardgame[max_row / 2, max_col / 2] = player_machine_str;
-                currentPlayerTurn = PlayerTurn.human_turn;
+                currentPlayer = Player.human;
             }
         }
 
