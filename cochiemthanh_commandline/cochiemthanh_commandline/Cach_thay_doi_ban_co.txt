@@ -1,0 +1,110 @@
+﻿replaceAll 
+----------
+
+human -> *m
+machine -> human
+*m -> machine
+---------------------------------------------------
+lose_number -> *w
+win_number -> lose_number
+*w -> win_number
+---------------------------------------------------
+//currentPlayerTurn == PlayerTurn.machine_turn to sure not get benefit for opponent but if training for two human fight each other, we need del it.            
+            if (currentPlayerTurn == PlayerTurn.machine_turn)
+---------------------------------------------------			
+/// <summary>
+/// prepare for generateMove and getFinalMove
+/// <param name="PlayerTurn"></param>
+/// </summary>        
+        public string GethumanMove(PlayerTurn PlayerTurn)
+        {
+            //determine getMove for which player            
+            bool isMaximizePlayer = (PlayerTurn == PlayerTurn.machine_turn) ? true : false;
+            int depth = 0;
+            Alpha alpha = new Alpha();
+            Beta beta = new Beta();
+            string finalMove = raw_number + "" + raw_number + "" + raw_number + "" + raw_number;
+            GenerateMove(null, depth, isMaximizePlayer, alpha, beta, ref finalMove);
+            return finalMove;
+        }
+---------------------------------------------------
+        /// <summary>
+        /// use minimax to generateMove.
+        /// </summary>
+        private int GenerateMove(string node, int depth, bool isMaximizePlayer, Alpha alpha, Beta beta, ref string finalMove)
+        {
+            PlayerTurn PlayerTurn = isMaximizePlayer ? PlayerTurn.machine_turn : PlayerTurn.human_turn;
+            List<string> possibleMoves = getPossibleMoves(PlayerTurn);
+            if (depth == max_depth || possibleMoves.Count == 0)
+            {
+                return (depth == 0) ? raw_number : eBoardgame[mapId[node[2]], mapId[node[3]]];
+            }
+			
+---------------------------------------------------			
+ //consider...
+        private void InitFirstStep()
+        {
+            Console.WriteLine("\nMay danh truoc (nhan 1) hoac nguoi danh truoc nhan (2)");
+            Console.Write("Wating your command: ");
+            int firstPlayerId;
+            while (true)
+            {
+                try
+                {
+                    firstPlayerId = Int32.Parse(Console.ReadLine());
+                    if (firstPlayerId > 0 || firstPlayerId < 3) return;
+                }
+                catch (Exception ex) { }
+
+                Console.Write("Error command! Please try again: ");
+            }
+
+            if (firstPlayerId == (int)PlayerTurn.machine_turn)
+            {
+                //boardgame[max_row / 2, max_col / 2] = player_human_str;
+                currentPlayerTurn = PlayerTurn.human_turn;
+            }
+        }		
+------------------------------------------------
+/// <summary>
+        /// get list block checkmate for the player
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns></returns>
+        public List<string> GetListFirstBlockCheckmate(Player player)
+        {
+            List<string> listStBlockCheckmate = new List<string>();
+            if (player == Player.human)
+            {
+                foreach (Piece horse in listMachineHorse)
+                {
+                    if (Math.Abs(horse.Row - wall_human.Row) == 1)                        
+                    {
+                        if (horse.Col - wall_human.Col == -2 
+                            && boardgame[wall_human.Row, wall_human.Col - 1].Equals(empty_str)) listStBlockCheckmate.Add("" + wall_human.Row + (wall_human.Col - 1));
+                        else if (horse.Col - wall_human.Col == 2
+                            && boardgame[wall_human.Row, wall_human.Col + 1].Equals(empty_str)) listStBlockCheckmate.Add("" + wall_human.Row + (wall_human.Col + 1));
+                    } 
+                    else if (Math.Abs(horse.Row - wall_human.Row) == 2
+                        && Math.Abs(horse.Col - wall_human.Col) == 1
+                        && boardgame[wall_human.Row - 1, wall_human.Col].Equals(empty_str)) listStBlockCheckmate.Add("" + (wall_human.Row - 1) + wall_human.Col);                   
+                }
+            }
+            else if (player == Player.machine)
+            {
+                foreach (Piece horse in listHumanHorse)
+                {
+                    if (Math.Abs(horse.Row - wall_machine.Row) == 1)
+                    {
+                        if (horse.Col - wall_human.Col == -2
+                            && boardgame[wall_human.Row, wall_human.Col - 1].Equals(empty_str)) listStBlockCheckmate.Add("" + wall_human.Row + (wall_human.Col - 1));
+                        else if (horse.Col - wall_human.Col == 2
+                            && boardgame[wall_human.Row, wall_human.Col + 1].Equals(empty_str)) listStBlockCheckmate.Add("" + wall_human.Row + (wall_human.Col + 1));
+                    }
+                    else if (Math.Abs(horse.Row - wall_human.Row) == 2
+                        && Math.Abs(horse.Col - wall_human.Col) == 1
+                        && boardgame[wall_human.Row + 1, wall_human.Col].Equals(empty_str)) listStBlockCheckmate.Add("" + (wall_human.Row + 1) + wall_human.Col);
+                }
+            }
+            return listStBlockCheckmate;
+        }

@@ -1,0 +1,30 @@
+1. Hàm lượng giá sẽ có tỷ lệ tấn công - phòng thủ.
+Câu hỏi đặt ra là khi nào thì tấn công và khi nào thì phòng thủ?
+
+Tư tưởng của binh pháp là trong công có thủ trong thủ có công.
+
+2. Khi nào tấn công?
+Mục tiêu là chiếu thành.
++ Tấn công tăng theo thứ tự sau:
+{Chiếu thành mà không thể bị cản trong 2 nước (chắc chắn thắng)
+, Vào ô máy bay đối phương nước hai
+, Vào ô máy bay đối phương nước đầu
+, Chiếu thành đối phương có thể bị cản} + //bonus(cản được quân đối phương)
+
+3. Khi nào phòng thủ?
+Mục tiêu là tránh bị chiếu thành.
++ Phòng thủ theo thứ tự sau: 
+{Cản quân chiếu thành đối phương nước đầu,
+Cản quân chiếu thành đối phương nước sau,
+, Cản quân địch vào ô máy bay của mình trong nước hai
+, Cản quân địch vào ô máy bay của mình trong nước đầu
+, Đi vào ô máy bay nước đầu (để nước sau có thể cản)} + //bonus(đồng thời chiếu thành đối phương hoặc không bị block)
+
+4. Điều chỉnh trọng số
+??
+
+Chung quy lại gồm các thành phần:
+Khi đánh thì sẽ quân máy sẽ mạng giá trị dương (lấy max giữa phòng thủ và tấn công)
+, quân người mang giá trị âm (lấy min giữa phòng thủ và tấn công).
+
+
