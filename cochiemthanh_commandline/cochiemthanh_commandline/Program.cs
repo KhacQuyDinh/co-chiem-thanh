@@ -9,7 +9,7 @@ namespace cochiemthanh_commandline
         bool isNonProtectedMachineWall = false;
 
         //to calculate the present number of step
-        int num_step = 0;        
+        int num_step = 0;
         int limit_step = 0;
 
         //status gameboard desc
@@ -22,7 +22,7 @@ namespace cochiemthanh_commandline
         public Dictionary<char, int> mapId = new Dictionary<char, int>();
         public Dictionary<int, char> mapCharCol = new Dictionary<int, char>();
         public Dictionary<int, char> mapCharRow = new Dictionary<int, char>();
-        public Dictionary<char, int> mapCharToInt= new Dictionary<char, int>();
+        public Dictionary<char, int> mapCharToInt = new Dictionary<char, int>();
 
         public void InitmapId()
         {
@@ -53,7 +53,7 @@ namespace cochiemthanh_commandline
             mapCharCol.Add(4, 'e');
             mapCharCol.Add(5, 'f');
             mapCharCol.Add(6, 'g');
-            mapCharCol.Add(7, 'h');          
+            mapCharCol.Add(7, 'h');
         }
 
         public void InitmapCharRow()
@@ -77,7 +77,7 @@ namespace cochiemthanh_commandline
             mapCharToInt.Add('4', 4);
             mapCharToInt.Add('5', 5);
             mapCharToInt.Add('6', 6);
-            mapCharToInt.Add('7', 7);           
+            mapCharToInt.Add('7', 7);
         }
 
         //determine current turn
@@ -90,8 +90,8 @@ namespace cochiemthanh_commandline
         }
 
         //player string desc
-        public const string player_human_str = "Người";
-        public const string player_machine_str = "Máy";
+        public const string player_human_str = "Nguoi";
+        public const string player_machine_str = "May";
 
         //public Piece currentHorse = null;
 
@@ -110,7 +110,7 @@ namespace cochiemthanh_commandline
         public Piece plane_machine = new Piece(7, 4, "MB");
 
         //human's horses        
-        public Piece O_human = new Piece(0, 0, "O ");
+        public Piece O_human = new Piece(0, 0, "O");
         public Piece P_human = new Piece(0, 4, "P ");
         public Piece Q_human = new Piece(0, 7, "Q ");
 
@@ -121,9 +121,9 @@ namespace cochiemthanh_commandline
 
         public List<Piece> listMachineHorse = new List<Piece>();
         public List<Piece> listHumanHorse = new List<Piece>();
-        private int num_human_horse = 0;
-        private int num_machine_horse = 0;
-    
+        //private int num_human_horse = 0;
+        //private int num_machine_horse = 0;
+
         public void InitListHorses()
         {
             //list human horses
@@ -161,7 +161,7 @@ namespace cochiemthanh_commandline
             boardgame[K_machine.Row, K_machine.Col] = K_machine.Label;
             boardgame[L_machine.Row, L_machine.Col] = L_machine.Label;
             boardgame[plane_machine.Row, plane_machine.Col] = plane_machine.Label;
-            boardgame[M_machine.Row, M_machine.Col] = M_machine.Label;        
+            boardgame[M_machine.Row, M_machine.Col] = M_machine.Label;
         }
 
         /// <summary>
@@ -170,7 +170,7 @@ namespace cochiemthanh_commandline
         /// </summary>
         /// <param name="move"></param>
         /// //debug
-        public void CalEBoard(bool isMaximizePlayer, string move)
+        public void CalEBoard(bool isMaximizePlayer, List<string> possibleMoves)
         {
             //reset value to zero
             for (int rw = 0; rw < max_row; rw++)
@@ -181,47 +181,61 @@ namespace cochiemthanh_commandline
                 }
             }
 
-            Player opponent = currentPlayer == Player.human ? Player.machine : Player.human;
-            //int defenceScore = 0;
-            //int attackScore = 0;
-            int row_1 = mapCharToInt[(char)move[0]];
-            int col_1 = mapCharToInt[(char)move[1]];
-            int row_2 = mapCharToInt[(char)move[2]];
-            int col_2 = mapCharToInt[(char)move[3]];
+            Player opponent = (currentPlayer == Player.human) ? Player.machine : Player.human;
 
-            ////first move and checkmate opponent
-            //if (EvaluateRate.num_move == 1
-            //    && IsCheckmated(row_1, col_1, row_2, col_2, opponent)) attackScore += EvaluateRate.st_nonblock_checkmate;
-            ////first move and move to opponent plane
-            //if (EvaluateRate.num_move == 1
-            //    && IsInOpptPlane(row_2, col_2, currentPlayer)) attackScore += EvaluateRate.st_moving_to_plane;
-            ////absolute block opponent who is checkmating
-            //if (IsCheckmated(currentPlayer) && !IsCheckmated(row_1, col_1, row_2, col_2, currentPlayer)) defenceScore += EvaluateRate.opponent_st_abs_block_checkmate;
-            ////reduce block(checkmated) point of opponent but can still be checkmated
-            //int reducedCheckmatedAmount = GetNumReduceBlockPoint(row_1, col_1, row_2, col_2, currentPlayer);
-            //if (reducedCheckmatedAmount > 0) defenceScore += reducedCheckmatedAmount * EvaluateRate.opponent_st_nonabs_block_checkmate;
-            ////block all path move to plane for one step opponent moves
-            //if (IsFirstAbsBlockToPlane(row_1, col_1, row_2, col_2, currentPlayer)) defenceScore += EvaluateRate.abs_st_block_moving_to_plane;
-            ////reduce path move to plane for one step opponent moves
-            //int reducedPlaneAmount = GetNumReduceBlockToPlane(row_1, col_1, row_2, col_2, currentPlayer);
-            //if (reducedPlaneAmount > 0) defenceScore += reducedPlaneAmount * EvaluateRate.nonabs_st_block_moving_to_plane;
+            foreach (string move in possibleMoves)
+            {
+                int defenceScore = 0;
+                int attackScore = 0;
 
-            //int maxValue = Math.Max(attackScore, defenceScore);                        
-            //int eValue = isMaximizePlayer ? maxValue : -maxValue;
-            //EBoardgame[row_2, col_2] = eValue;
-            Random random = new Random();
-            EBoardgame[row_2, col_2] = random.Next();
-            Console.WriteLine(EBoardgame[row_2,col_2]);
-            //Console.WriteLine(attackScore + "-" + defenceScore);
+                //cordinate of the move
+                int row_1 = mapCharToInt[(char)move[0]];
+                int col_1 = mapCharToInt[(char)move[1]];
+                int row_2 = mapCharToInt[(char)move[2]];
+                int col_2 = mapCharToInt[(char)move[3]];
+
+                ////first move and checkmate opponent
+                if (EvaluateRate.num_move == 1
+                    && IsCheckmated(row_1, col_1, row_2, col_2, opponent))
+                {
+                    attackScore += EvaluateRate.st_nonblock_checkmate;
+                }
+
+                //first move and move to opponent plane
+                if (EvaluateRate.num_move == 1
+                    && IsInOpptPlane(row_2, col_2, currentPlayer)) attackScore += EvaluateRate.st_moving_to_plane;
+                //absolute block opponent who is checkmating
+                if (IsCheckmated(currentPlayer) && !IsCheckmated(row_1, col_1, row_2, col_2, currentPlayer)) defenceScore += EvaluateRate.opponent_st_abs_block_checkmate;
+                //reduce block(checkmated) point of opponent but can still be checkmated
+                int reducedCheckmatedAmount = GetNumReduceBlockPoint(row_1, col_1, row_2, col_2, currentPlayer);
+                if (reducedCheckmatedAmount > 0) defenceScore += reducedCheckmatedAmount * EvaluateRate.opponent_st_nonabs_block_checkmate;
+                //block all path move to plane for one step opponent moves
+                if (IsFirstAbsBlockToPlane(row_1, col_1, row_2, col_2, currentPlayer)) defenceScore += EvaluateRate.abs_st_block_moving_to_plane;
+                //reduce path move to plane for one step opponent moves
+                int reducedPlaneAmount = GetNumReduceBlockToPlane(row_1, col_1, row_2, col_2, currentPlayer);
+                if (reducedPlaneAmount > 0) defenceScore += reducedPlaneAmount * EvaluateRate.nonabs_st_block_moving_to_plane;
+                //eat some opp horses
+                int num_eaten_opp_horse = GetNumEatenOppHorses(row_2, col_2, currentPlayer);
+                attackScore = num_eaten_opp_horse * EvaluateRate.eat_opp_horse;
+
+                //conclusion
+                int abs_eValue = attackScore + defenceScore;
+                int eValue = isMaximizePlayer ? abs_eValue : -abs_eValue;
+                EBoardgame[row_2, col_2] = eValue;
+                //Random random = new Random();
+                //EBoardgame[row_2, col_2] = random.Next();
+                //Console.WriteLine(EBoardgame[row_2, col_2]);
+                //Console.WriteLine(attackScore + "-" + defenceScore);
+            }
         }
-
+       
         public void PrintBoard()
         {
             Console.Write("    ");
             for (int cl = 0; cl < max_col; cl++) Console.Write((char)(cl + 'a') + "    ");
             Console.WriteLine("\n  -----------------------------------------");
             for (int rw = 0; rw < max_row; rw++)
-            {                
+            {
                 Console.Write((max_row - rw) + " ");
                 for (int cl = 0; cl < max_col; cl++)
                 {
@@ -235,7 +249,7 @@ namespace cochiemthanh_commandline
         public bool IsValidMove(Player player, int rw_0, int col_0, int rw_1, int col_1)
         {
             //guarantee position of the piece is not beyound the bound of gameboards
-            if (rw_1 < 0 || rw_1 >= max_row || col_1 < 0 || col_1 >= max_col) return false;           
+            if (rw_1 < 0 || rw_1 >= max_row || col_1 < 0 || col_1 >= max_col) return false;
 
             //guarantee you are moving a horse
             if (GetHorse(rw_0, col_0) == null) return false;
@@ -258,7 +272,7 @@ namespace cochiemthanh_commandline
             if ((player == Player.human)
                 && (rw_1 == wall_human.Row && col_1 == wall_human.Col
                 || rw_1 == plane_human.Row && col_1 == plane_human.Col
-                || listHumanHorse.Contains(GetHorse(Player.human, rw_1, col_1)))                
+                || listHumanHorse.Contains(GetHorse(Player.human, rw_1, col_1)))
                 ||
                 (player == Player.machine)
                 && (rw_1 == wall_machine.Row && col_1 == wall_machine.Col
@@ -389,7 +403,7 @@ namespace cochiemthanh_commandline
                         return p;
                     }
                 }
-            }            
+            }
             else
             {
                 foreach (Piece p in listHumanHorse)
@@ -400,8 +414,19 @@ namespace cochiemthanh_commandline
                     }
                 }
             }
-            
+
             return null;
+        }
+
+        public int GetNumEatenOppHorses(int row_2, int col_2, Player player)
+        {
+            List<Piece> listHorse = (player == Player.human) ? listHumanHorse : listMachineHorse;
+            if (listHorse.Contains(GetHorse(row_2,col_2)))
+            {
+                return 1;
+            }
+
+            return 0;
         }
 
         /// <summary>
@@ -494,7 +519,7 @@ namespace cochiemthanh_commandline
             boardgame[row_1, col_1] = boardgame[row_2, col_2];
             boardgame[row_2, col_2] = des;
 
-            return  secondNumBlockPlane - firstNumBlockPlane;
+            return secondNumBlockPlane - firstNumBlockPlane;
         }
 
         public int GetNumReduceBlockPoint(int row_1, int col_1, int row_2, int col_2, Player player)
@@ -748,10 +773,10 @@ namespace cochiemthanh_commandline
             //    if (currentPlayer == Player.human) return lose_number;
             //}
 
-            if (O_human.Row == wall_machine.Row &&  O_human.Col == wall_machine.Col
+            if (O_human.Row == wall_machine.Row && O_human.Col == wall_machine.Col
                || P_human.Row == wall_machine.Row && P_human.Col == wall_machine.Col
                || Q_human.Row == wall_machine.Row && Q_human.Col == wall_machine.Col
-               || num_machine_horse == 0)
+               || listMachineHorse.Count == 0)
             {
                 if (currentPlayer == Player.machine) return lose_number;
                 if (currentPlayer == Player.human) return win_number;
@@ -760,7 +785,7 @@ namespace cochiemthanh_commandline
             if (K_machine.Row == wall_human.Row && K_machine.Col == wall_human.Col
                 || L_machine.Row == wall_human.Row && L_machine.Col == wall_human.Col
                 || M_machine.Row == wall_human.Row && M_machine.Col == wall_human.Col
-                || num_human_horse == 0)
+                || listHumanHorse.Count == 0)
             {
                 if (currentPlayer == Player.machine) return win_number;
                 if (currentPlayer == Player.human) return lose_number;
@@ -776,8 +801,8 @@ namespace cochiemthanh_commandline
         {
             string currentPlayerStr = (currentPlayer == Player.human) ? player_human_str : player_machine_str;
 
-            if (status == raw_number) return "Hoà";
-            if (status == win_number) return currentPlayerStr + " thắng";
+            if (status == raw_number) return "Hoa";
+            if (status == win_number) return currentPlayerStr + " thang";
             if (status == lose_number) return currentPlayerStr + " thua";
             return "";
         }
@@ -848,7 +873,7 @@ namespace cochiemthanh_commandline
                     //CalEBoard  for a specific postion (row,col) after simulating the horse moving to there
                     if (depth == max_depth - 1 || GetListPossibleMove(player, p).Count == 0)
                     {
-                        CalEBoard(isMaximizePlayer, p);
+                        CalEBoard(isMaximizePlayer, possibleMoves);
                     }
 
                     //convert char to int for p
@@ -860,8 +885,9 @@ namespace cochiemthanh_commandline
                     //update machine horse position
                     UpdateMachineHorsePos("" + p_0 + p_1 + p_2 + p_3);
 
-                    //check whether (p_2,p_3) in opponent horse
-                    bool nextMoveInOppHorse = listHumanHorse.Contains(GetHorse(Player.human, p_2, p_3));
+                    //check whether (p_2,p_3) in opponent(human) horse
+                    Piece oppHumanHorse = GetHorse(Player.human, p_2, p_3);
+                    bool nextMoveInOppHorse = listHumanHorse.Contains(oppHumanHorse);
 
                     //simulate the horse moves
                     string originLabel = boardgame[p_0, p_1];
@@ -876,8 +902,8 @@ namespace cochiemthanh_commandline
                         boardgame[p_0, p_1] = empty_str;
                     }
 
-                    //case eat opponent horse
-                    if (nextMoveInOppHorse) num_human_horse--;
+                    //case eat opponent(human) horse
+                    if (nextMoveInOppHorse) listHumanHorse.Remove(oppHumanHorse);
 
                     //generate next move
                     value = GenerateMove(p, depth + 1, false, alpha, new Beta(), ref finalMove);
@@ -885,15 +911,15 @@ namespace cochiemthanh_commandline
                     //revert simulation
                     boardgame[p_2, p_3] = desLabel;
                     boardgame[p_0, p_1] = originLabel;
-                    //case eat opponent horse
-                    if (nextMoveInOppHorse) num_human_horse++;
-                    
+                    //revert case eat opponent(human) horse
+                    if (nextMoveInOppHorse) listHumanHorse.Add(oppHumanHorse);
+
                     //update machine horse position
                     UpdateMachineHorsePos("" + p_2 + p_3 + p_0 + p_1);
 
                     //calculate maximum value for maximize player
                     bestVal = Math.Max(value, bestVal);
-                                        
+
                     //update final move when alpha changed
                     if (alpha.max < bestVal)
                     {
@@ -916,7 +942,7 @@ namespace cochiemthanh_commandline
                     //CalEBoard  for a specific postion (row,col) after simulating the horse moves there
                     if (depth == max_depth - 1 || GetListPossibleMove(player, p).Count == 0)
                     {
-                        CalEBoard(isMaximizePlayer, p);
+                        CalEBoard(isMaximizePlayer, possibleMoves);
                     }
 
                     //convert char to int for p
@@ -928,8 +954,9 @@ namespace cochiemthanh_commandline
                     //update human horse position
                     UpdateHumanHorsePos("" + p_0 + p_1 + p_2 + p_3);
 
-                    //check whether (p_2,p_3) in opponent horse
-                    bool nextMoveInOppHorse = listMachineHorse.Contains(GetHorse(Player.machine, p_2, p_3));
+                    //check whether (p_2,p_3) in opponent(machine) horse
+                    Piece oppMachineHorse = GetHorse(Player.machine, p_2, p_3);
+                    bool nextMoveInOppHorse = listMachineHorse.Contains(oppMachineHorse);
 
                     //simulate the horse moves
                     string originLabel = boardgame[p_0, p_1];
@@ -944,8 +971,8 @@ namespace cochiemthanh_commandline
                         boardgame[p_0, p_1] = empty_str;
                     }
 
-                    //case eat opponent horse
-                    if (nextMoveInOppHorse) num_machine_horse--;
+                    //case eat opponent(machine) horse
+                    if (nextMoveInOppHorse) listMachineHorse.Remove(oppMachineHorse);
 
                     //generate next move
                     value = GenerateMove(p, depth + 1, true, new Alpha(), beta, ref finalMove);
@@ -953,8 +980,8 @@ namespace cochiemthanh_commandline
                     //revert simulation
                     boardgame[p_2, p_3] = desLabel;
                     boardgame[p_0, p_1] = originLabel;
-                    //case eat opponent horse
-                    if (nextMoveInOppHorse) num_machine_horse++;
+                    //revert case eat opponent horse
+                    if (nextMoveInOppHorse) listMachineHorse.Add(oppMachineHorse);
 
                     //update human horse position
                     UpdateHumanHorsePos("" + p_2 + p_3 + p_0 + p_1);
@@ -985,27 +1012,27 @@ namespace cochiemthanh_commandline
         private List<string> GetListPossibleMove(Player player)
         {
             List<string> mlistMove = new List<string>();
-            
+
             if (player == Player.human)
             {
                 //if wall is eaten or no more horse to move
                 if (listMachineHorse.Contains(GetHorse(Player.machine, wall_human.Row, wall_human.Col))
-                    || num_human_horse == 0) return mlistMove;
+                    || listHumanHorse.Count == 0) return mlistMove;
 
                 foreach (Piece p in listHumanHorse)
                 {
                     if (IsInOpptPlane(p.Row, p.Col, Player.machine))
                     {
                         for (int i = 0; i < max_row; i++)
-                        for (int j = 0; j < max_col; j++)
-                        {
-                            //empty place or opponent horse place                            
-                            if (boardgame[i,j].Equals(empty_str) || listMachineHorse.Contains(GetHorse(Player.machine, i, j)))
+                            for (int j = 0; j < max_col; j++)
                             {
+                                //empty place or opponent horse place                            
+                                if (boardgame[i, j].Equals(empty_str) || listMachineHorse.Contains(GetHorse(Player.machine, i, j)))
+                                {
                                     mlistMove.Add("" + p.Row + p.Col + i + j);
+                                }
                             }
-                        }
-                    } 
+                    }
                     else
                     {
                         if (IsValidMove(player, p.Row, p.Col, p.Row - 1, p.Col + 2)) mlistMove.Add("" + p.Row + p.Col + (p.Row - 1) + (p.Col + 2));
@@ -1016,14 +1043,14 @@ namespace cochiemthanh_commandline
                         if (IsValidMove(player, p.Row, p.Col, p.Row + 2, p.Col - 1)) mlistMove.Add("" + p.Row + p.Col + (p.Row + 2) + (p.Col - 1));
                         if (IsValidMove(player, p.Row, p.Col, p.Row + 2, p.Col + 1)) mlistMove.Add("" + p.Row + p.Col + (p.Row + 2) + (p.Col + 1));
                         if (IsValidMove(player, p.Row, p.Col, p.Row + 1, p.Col + 2)) mlistMove.Add("" + p.Row + p.Col + (p.Row + 1) + (p.Col + 2));
-                    }                    
+                    }
                 }
             }
             else if (player == Player.machine)
             {
                 //if wall is eaten or no more horse to move
                 if (listHumanHorse.Contains(GetHorse(Player.human, wall_machine.Row, wall_machine.Col))
-                    || num_machine_horse == 0) return mlistMove;
+                    || listMachineHorse.Count == 0) return mlistMove;
 
                 foreach (Piece p in listMachineHorse)
                 {
@@ -1081,7 +1108,7 @@ namespace cochiemthanh_commandline
                 {
                     boardgame[p_0, p_1] = empty_str;
                 }
-            } 
+            }
             else if (player == Player.human)
             {
                 if (p_0 == plane_machine.Row && p_1 == plane_machine.Col)
@@ -1114,20 +1141,20 @@ namespace cochiemthanh_commandline
             string move;
             while (true)
             {
-                move = Console.ReadLine();                
+                move = Console.ReadLine();
                 if (move.Length != 4
                     || !IsDigit(move[0]) || !IsAlphabet(move[1])
                     || !IsDigit(move[2]) || !IsAlphabet(move[3])
                     || !IsValidMove(Player.human, mapId[move[0]], mapId[move[1]], mapId[move[2]], mapId[move[3]]))
                 {
-                    Console.Write("Error command! Please try again: ");                    
+                    Console.Write("Error command! Please try again: ");
                 }
                 else
                 {
                     break;
                 }
-            }       
-            
+            }
+
             //value of row and col in integer
             return "" + mapId[move[0]] + mapId[move[1]] + mapId[move[2]] + mapId[move[3]];
         }
@@ -1154,11 +1181,8 @@ namespace cochiemthanh_commandline
             InitmapCharRow();
             InitmapCharToInt();
             InitFirstStep();
-            max_depth = 4;
+            max_depth = 6;
             limit_step = 7;
-
-            num_human_horse = 3;
-            num_machine_horse = 3;
 
             isNonProtectedHumanWall = false;
             isNonProtectedMachineWall = false;
@@ -1186,8 +1210,10 @@ namespace cochiemthanh_commandline
                         int move_3 = mapCharToInt[(char)move[3]];
 
                         //check whether eat machine(opponent) horse
-                        bool isEatOppHorse = listMachineHorse.Contains(GetHorse(Player.machine, move_2, move_3));
-                        if (isEatOppHorse) num_machine_horse--;
+                        Piece oppMachineHorse = GetHorse(Player.machine, move_2, move_3);
+                        //bool isAteOppHorse = listMachineHorse.Contains(oppMachineHorse);
+                        //if (isAteOppHorse) listMachineHorse.Remove(oppMachineHorse);
+                        listMachineHorse.Remove(oppMachineHorse);
 
                         boardgame[move_2, move_3] = boardgame[move_0, move_1];
                         if (move_0 == plane_machine.Row && move_1 == plane_machine.Col)
@@ -1214,6 +1240,7 @@ namespace cochiemthanh_commandline
                         if (statusGameBoard != live_game_number)
                         {
                             Console.WriteLine(GetStatusMsg(statusGameBoard));
+                            Console.ReadLine();
                             return;
                         }
                     }
@@ -1234,9 +1261,9 @@ namespace cochiemthanh_commandline
                         if (!move.Equals("-1-1-1-1"))
                         {
                             Console.WriteLine("" + mapCharRow[mapCharToInt[move[0]]] + mapCharCol[mapCharToInt[move[1]]] + mapCharRow[mapCharToInt[move[2]]] + mapCharCol[mapCharToInt[move[3]]]);
-                        }                       
+                        }
                         UpdateMachineHorsePos(move);
-                        oldMove = move;                        
+                        oldMove = move;
 
                         //covert char to int
                         int move_0 = mapCharToInt[(char)move[0]];
@@ -1245,8 +1272,10 @@ namespace cochiemthanh_commandline
                         int move_3 = mapCharToInt[(char)move[3]];
 
                         //check whether eat human(opponent) horse
-                        bool isEatOppHorse = listHumanHorse.Contains(GetHorse(Player.human, move_2, move_3));
-                        if (isEatOppHorse) num_human_horse--;
+                        Piece oppHumanHorse = GetHorse(Player.human, move_2, move_3);
+                        //bool isAteOppHorse = listHumanHorse.Contains(oppHumanHorse);
+                        //if (isAteOppHorse) listHumanHorse.Remove(oppHumanHorse);
+                        listHumanHorse.Remove(oppHumanHorse);
 
                         boardgame[move_2, move_3] = boardgame[move_0, move_1];
                         if (move_0 == plane_human.Row && move_1 == plane_human.Col)
@@ -1273,6 +1302,7 @@ namespace cochiemthanh_commandline
                         if (statusGameBoard != live_game_number)
                         {
                             Console.WriteLine(GetStatusMsg(statusGameBoard));
+                            Console.ReadLine();
                             return;
                         }
                     }
@@ -1281,11 +1311,10 @@ namespace cochiemthanh_commandline
                 num_step++;
                 if (num_step == limit_step)
                 {
-                    limit_step += 7;                    
+                    limit_step += 7;
                     max_depth++;
                 }
             }
-            Console.ReadLine();
         }
 
         //debug
@@ -1356,7 +1385,7 @@ namespace cochiemthanh_commandline
 
         public static void Main(string[] args)
         {
-            Program cochiemthanh = new Program();                        
+            Program cochiemthanh = new Program();
             cochiemthanh.GameBoard();
         }
     }
