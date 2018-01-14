@@ -195,25 +195,27 @@ namespace cochiemthanh_commandline
                 int col_2 = mapCharToInt[(char)move[3]];
 
                 ////first move and checkmate opponent
-                if (EvaluateRate.num_move == 1
-                    && IsCheckmated(row_1, col_1, row_2, col_2, opponent))
-                {
-                    attackScore += EvaluateRate.st_nonblock_checkmate;
-                }
+                //if (EvaluateRate.num_move == 1
+                //    && IsCheckmated(row_1, col_1, row_2, col_2, opponent))
+                //{
+                //    attackScore += EvaluateRate.st_nonblock_checkmate;
+                //}
 
                 //first move and move to opponent plane
                 if (EvaluateRate.num_move == 1
                     && IsInOpptPlane(row_2, col_2, currentPlayer)) attackScore += EvaluateRate.st_moving_to_plane;
-                //absolute block opponent who is checkmating
-                if (IsCheckmated(currentPlayer) && !IsCheckmated(row_1, col_1, row_2, col_2, currentPlayer)) defenceScore += EvaluateRate.opponent_st_abs_block_checkmate;
-                //reduce block(checkmated) point of opponent but can still be checkmated
-                int reducedCheckmatedAmount = GetNumReduceBlockPoint(row_1, col_1, row_2, col_2, currentPlayer);
-                if (reducedCheckmatedAmount > 0) defenceScore += reducedCheckmatedAmount * EvaluateRate.opponent_st_nonabs_block_checkmate;
+                ////absolute block opponent who is checkmating
+                //if (IsCheckmated(currentPlayer) && !IsCheckmated(row_1, col_1, row_2, col_2, currentPlayer)) defenceScore += EvaluateRate.opponent_st_abs_block_checkmate;
+                ////reduce block(checkmated) point of opponent but can still be checkmated
+                //int reducedCheckmatedAmount = GetNumReduceBlockPoint(row_1, col_1, row_2, col_2, currentPlayer);
+                //if (reducedCheckmatedAmount > 0) defenceScore += reducedCheckmatedAmount * EvaluateRate.opponent_st_nonabs_block_checkmate;
+                
                 //block all path move to plane for one step opponent moves
                 if (IsFirstAbsBlockToPlane(row_1, col_1, row_2, col_2, currentPlayer)) defenceScore += EvaluateRate.abs_st_block_moving_to_plane;
                 //reduce path move to plane for one step opponent moves
-                int reducedPlaneAmount = GetNumReduceBlockToPlane(row_1, col_1, row_2, col_2, currentPlayer);
-                if (reducedPlaneAmount > 0) defenceScore += reducedPlaneAmount * EvaluateRate.nonabs_st_block_moving_to_plane;
+                //int reducedPlaneAmount = GetNumReduceBlockToPlane(row_1, col_1, row_2, col_2, currentPlayer);
+                //if (reducedPlaneAmount > 0) defenceScore += reducedPlaneAmount * EvaluateRate.nonabs_st_block_moving_to_plane;
+                
                 //eat some opp horses
                 int num_eaten_opp_horse = GetNumEatenOppHorses(row_2, col_2, currentPlayer);
                 attackScore = num_eaten_opp_horse * EvaluateRate.eat_opp_horse;
@@ -228,7 +230,7 @@ namespace cochiemthanh_commandline
                 //Console.WriteLine(attackScore + "-" + defenceScore);
             }
         }
-       
+
         public void PrintBoard()
         {
             Console.Write("    ");
@@ -421,7 +423,7 @@ namespace cochiemthanh_commandline
         public int GetNumEatenOppHorses(int row_2, int col_2, Player player)
         {
             List<Piece> listHorse = (player == Player.human) ? listHumanHorse : listMachineHorse;
-            if (listHorse.Contains(GetHorse(row_2,col_2)))
+            if (listHorse.Contains(GetHorse(row_2, col_2)))
             {
                 return 1;
             }
@@ -1173,7 +1175,7 @@ namespace cochiemthanh_commandline
         /// game loop
         /// </summary>        
         public void GameBoard()
-        {            
+        {
             ResetBoardGame();
             InitListHorses();
             InitmapId();
@@ -1361,7 +1363,7 @@ namespace cochiemthanh_commandline
         {
             PrintBoard();
 
-            Console.WriteLine("\nMay danh truoc (nhan 1) hoac nguoi danh truoc nhan (2)");
+            Console.WriteLine("\nNguoi danh truoc (nhan 1) hoac May danh truoc (nhan 2)");
             Console.Write("Wating your command: ");
             int firstPlayerId;
             while (true)
@@ -1373,14 +1375,10 @@ namespace cochiemthanh_commandline
                 }
                 catch (Exception ex) { }
 
-                Console.Write("Error command! Please try again: ");
+                Console.Write("[Error] command! Please try again: ");
             }
 
-            if (firstPlayerId == (int)Player.machine)
-            {
-                //boardgame[max_row / 2, max_col / 2] = player_machine_str;
-                currentPlayer = Player.human;
-            }
+            currentPlayer = (firstPlayerId == (int)Player.machine) ? Player.machine : Player.human;
         }
 
         public static void Main(string[] args)
