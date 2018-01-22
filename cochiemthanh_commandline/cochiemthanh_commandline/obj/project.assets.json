@@ -7045,11 +7045,11 @@
       "hideWarningsAndErrors": true
     },
     "restore": {
-      "projectUniqueName": "D:\\co-chiem-thanh\\cochiemthanh_commandline\\cochiemthanh_commandline\\cochiemthanh_commandline.csproj",
+      "projectUniqueName": "D:\\C# proj\\co-chiem-thanh\\cochiemthanh_commandline\\cochiemthanh_commandline\\cochiemthanh_commandline.csproj",
       "projectName": "cochiemthanh_commandline",
-      "projectPath": "D:\\co-chiem-thanh\\cochiemthanh_commandline\\cochiemthanh_commandline\\cochiemthanh_commandline.csproj",
+      "projectPath": "D:\\C# proj\\co-chiem-thanh\\cochiemthanh_commandline\\cochiemthanh_commandline\\cochiemthanh_commandline.csproj",
       "packagesPath": "C:\\Users\\MyPC\\.nuget\\packages\\",
-      "outputPath": "D:\\co-chiem-thanh\\cochiemthanh_commandline\\cochiemthanh_commandline\\obj\\",
+      "outputPath": "D:\\C# proj\\co-chiem-thanh\\cochiemthanh_commandline\\cochiemthanh_commandline\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\MyPC\\AppData\\Roaming\\NuGet\\NuGet.Config",

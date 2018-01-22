@@ -18,3 +18,15 @@ D:\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\obj\Debug\ne
 D:\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\obj\Debug\netcoreapp1.1\cochiemthanh_commandline.AssemblyInfo.cs
 D:\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\obj\Debug\netcoreapp1.1\cochiemthanh_commandline.dll
 D:\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\obj\Debug\netcoreapp1.1\cochiemthanh_commandline.pdb
+D:\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\obj\Debug\netcoreapp1.1\cochiemthanh_commandline.csprojResolveAssemblyReference.cache
+D:\C# proj\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\bin\Debug\netcoreapp1.1\cochiemthanh_commandline.deps.json
+D:\C# proj\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\bin\Debug\netcoreapp1.1\cochiemthanh_commandline.runtimeconfig.json
+D:\C# proj\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\bin\Debug\netcoreapp1.1\cochiemthanh_commandline.runtimeconfig.dev.json
+D:\C# proj\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\bin\Debug\netcoreapp1.1\cochiemthanh_commandline.dll
+D:\C# proj\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\bin\Debug\netcoreapp1.1\cochiemthanh_commandline.pdb
+D:\C# proj\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\obj\Debug\netcoreapp1.1\cochiemthanh_commandline.csprojResolveAssemblyReference.cache
+D:\C# proj\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\obj\Debug\netcoreapp1.1\cochiemthanh_commandline.csproj.CoreCompileInputs.cache
+D:\C# proj\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\obj\Debug\netcoreapp1.1\cochiemthanh_commandline.AssemblyInfoInputs.cache
+D:\C# proj\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\obj\Debug\netcoreapp1.1\cochiemthanh_commandline.AssemblyInfo.cs
+D:\C# proj\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\obj\Debug\netcoreapp1.1\cochiemthanh_commandline.dll
+D:\C# proj\co-chiem-thanh\cochiemthanh_commandline\cochiemthanh_commandline\obj\Debug\netcoreapp1.1\cochiemthanh_commandline.pdb
