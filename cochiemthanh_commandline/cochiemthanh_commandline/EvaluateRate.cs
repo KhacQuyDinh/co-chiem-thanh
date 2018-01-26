@@ -18,5 +18,9 @@ namespace cochiemthanh_commandline
         public const int abs_block_move_to_player_plane = 147;
         public const int bonus_block_checkmate = 130;
         public const int bonus_block_move_to_plane = 137;
+        public const int prevent_oppt_check_plane = 157;
+        public const int prevent_oppt_check_wall = 170;
+        public const int fail_oppt_check_plane = 157;
+        public const int fail_oppt_check_wall = 170;
     }
 }
