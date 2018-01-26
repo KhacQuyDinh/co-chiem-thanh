@@ -1501,7 +1501,10 @@ namespace cochiemthanh_commandline
                             for (int j = 0; j < max_col; j++)
                             {
                                 //empty place or opponent horse place                            
-                                if (boardgame[i, j].Equals(empty_str) || listMachineHorse.Contains(GetHorse(Player.machine, i, j)))
+                                if (boardgame[i, j].Equals(empty_str) 
+                                    ||
+                                    !(wall_machine.Row == i && wall_machine.Col == j)
+                                    &&  listMachineHorse.Contains(GetHorse(Player.machine, i, j)))
                                 {
                                     mlistMove.Add("" + p.Row + p.Col + i + j);
                                 }
@@ -1534,7 +1537,10 @@ namespace cochiemthanh_commandline
                             for (int j = 0; j < max_col; j++)
                             {
                                 //empty place or opponent horse place
-                                if (boardgame[i, j].Equals(empty_str) || listHumanHorse.Contains(GetHorse(Player.human, i, j)))
+                                if (boardgame[i, j].Equals(empty_str) 
+                                    ||
+                                    !(wall_human.Row == i && wall_human.Col == j)
+                                    && listHumanHorse.Contains(GetHorse(Player.human, i, j)))
                                 {
                                     mlistMove.Add("" + p.Row + p.Col + i + j);
                                 }
