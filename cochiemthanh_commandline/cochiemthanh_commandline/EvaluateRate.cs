@@ -20,7 +20,7 @@ namespace cochiemthanh_commandline
         public const int bonus_block_move_to_plane = 100;
         public const int prevent_oppt_check_plane = 80;
         public const int prevent_oppt_check_wall = 170;
-        public const int fail_oppt_check_plane = 80;
+        public const int fail_oppt_check_plane = 70;
         public const int fail_oppt_check_wall = 170;
     }
 }
