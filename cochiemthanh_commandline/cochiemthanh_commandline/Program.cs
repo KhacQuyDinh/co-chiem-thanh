@@ -422,7 +422,7 @@ namespace cochiemthanh_commandline
         }
 
         private void UpdatePlayerHorsePos(Player ourPlayer, String move)
-        {                        
+        {
             if (ourPlayer == Player.human) UpdateHumanHorsePos(move);
             else UpdateMachineHorsePos(move);
         }
@@ -683,19 +683,22 @@ namespace cochiemthanh_commandline
 
         public bool IsValidMove(Player ourPlayer, int rw_0, int col_0, int rw_1, int col_1)
         {
+            //moving the prev horse at a time
+            if (prevHorse != null && rw_0 == prevHorse.Row && col_0 == prevHorse.Col) return false;
+
             //guarantee position of the piece is not beyound the bound of gameboards
             if (rw_1 < 0 || rw_1 >= max_row || col_1 < 0 || col_1 >= max_col) return false;
 
             //guarantee you are moving a horse
             if (GetHorse(ourPlayer, rw_0, col_0) == null) return false;
 
-            ////guarantee the position move to is valid place that means cannot move to oppenent horse because it cannot be eaten.
-            //if (((player == Player.human)
+            //guarantee the position move to is valid place that means cannot move to oppenent horse because it cannot be eaten.
+            //if (((ourPlayer == Player.human)
             //    && !boardgame[rw_1, col_1].Equals(plane_machine.Label)
             //    && !boardgame[rw_1, col_1].Equals(wall_machine.Label)
             //    && !boardgame[rw_1, col_1].Equals(empty_str))
             //    ||
-            //    ((player == Player.machine)
+            //    ((ourPlayer == Player.machine)
             //    && !boardgame[rw_1, col_1].Equals(plane_human.Label)
             //    && !boardgame[rw_1, col_1].Equals(wall_human.Label))
             //    && !boardgame[rw_1, col_1].Equals(empty_str))
@@ -747,48 +750,42 @@ namespace cochiemthanh_commandline
 
             //if the horse from the plane of opponent then we don't need guarantee for 
             //the horse be or not be blocked and unlimit the horse path
-            if ((ourPlayer == Player.human
+            if (!((ourPlayer == Player.human
                 && rw_0 == plane_machine.Row
                 && col_0 == plane_machine.Col)
                 ||
                 (ourPlayer == Player.machine
                 && rw_0 == plane_human.Row
-                && col_0 == plane_human.Col))
+                && col_0 == plane_human.Col)))
             {
-                return true;
+                //the path does not belong to the horse
+                if (!((Math.Abs(rw_1 - rw_0) == 1 && Math.Abs(col_1 - col_0) == 2)
+                    || (Math.Abs(rw_1 - rw_0) == 2 && Math.Abs(col_1 - col_0) == 1))) return false;
             }
-
-            //the path does not belong to the horse
-            if (!((Math.Abs(rw_1 - rw_0) == 1 && Math.Abs(col_1 - col_0) == 2)
-                || (Math.Abs(rw_1 - rw_0) == 2 && Math.Abs(col_1 - col_0) == 1))) return false;
 
             //guarantee the moving in not be blocked by another horse and not be checkmated for 8 piece pos but group into 4
             int dis_row = rw_1 - rw_0;
             int dis_col = col_1 - col_0;
             //position #1 : 30 and -30 degree
-            if ((dis_row == 1 || dis_row == -1) && dis_col == 2
-                && (col_0 + 1) < max_col
+            if ((dis_row == 1 || dis_row == -1) && dis_col == 2                
                 && !boardgame[rw_0, col_0 + 1].Equals(empty_str))
             {
                 return false;
             }
             //position #2 : 60 and 120 degree
-            if (dis_row == -2 && (dis_col == 1 || dis_col == -1)
-                && (rw_0 - 1) > -1
+            if (dis_row == -2 && (dis_col == 1 || dis_col == -1)                
                 && !boardgame[rw_0 - 1, col_0].Equals(empty_str))
             {
                 return false;
             }
             //position #3 : 150 and 210 degree
-            if ((dis_row == 1 || dis_row == -1) && dis_col == -2
-                && (col_0 - 1) > -1
+            if ((dis_row == 1 || dis_row == -1) && dis_col == -2                
                 && !boardgame[rw_0, col_0 - 1].Equals(empty_str))
             {
                 return false;
             }
             //position #4 : 240 and 300 degree
-            if (dis_row == 2 && (dis_col == -1 || dis_col == 1)
-                && (rw_0 + 1) < max_row
+            if (dis_row == 2 && (dis_col == -1 || dis_col == 1)                
                 && !boardgame[rw_0 + 1, col_0].Equals(empty_str))
             {
                 return false;
@@ -1248,12 +1245,14 @@ namespace cochiemthanh_commandline
             public int min = min_inf;
         }
 
+
+        private Piece prevHorse = null;
         /// <summary>
         /// prepare for generateMove and getFinalMove
         /// <param name="Player"></param>
         /// </summary>        
         public String GetMachineMove(Player player)
-        {
+        {            
             //determine getMove for which player            
             bool isMaximizePlayer = (player == Player.machine) ? true : false;
             int depth = 0;
@@ -1495,16 +1494,13 @@ namespace cochiemthanh_commandline
 
                 foreach (Piece p in listHumanHorse)
                 {
+                    //transfer all if in oppenent plane
                     if (IsInOpptPlane(p.Row, p.Col, Player.machine))
                     {
                         for (int i = 0; i < max_row; i++)
                             for (int j = 0; j < max_col; j++)
-                            {
-                                //empty place or opponent horse place                            
-                                if (boardgame[i, j].Equals(empty_str) 
-                                    ||
-                                    !(wall_machine.Row == i && wall_machine.Col == j)
-                                    &&  listMachineHorse.Contains(GetHorse(Player.machine, i, j)))
+                            {                                                         
+                                if (IsValidMove(player, p.Row, p.Col, i, j))
                                 {
                                     mlistMove.Add("" + p.Row + p.Col + i + j);
                                 }
@@ -1531,16 +1527,13 @@ namespace cochiemthanh_commandline
 
                 foreach (Piece p in listMachineHorse)
                 {
+                    //transfer all if in oppenent plane
                     if (IsInOpptPlane(p.Row, p.Col, Player.human))
                     {
                         for (int i = 0; i < max_row; i++)
                             for (int j = 0; j < max_col; j++)
                             {
-                                //empty place or opponent horse place
-                                if (boardgame[i, j].Equals(empty_str) 
-                                    ||
-                                    !(wall_human.Row == i && wall_human.Col == j)
-                                    && listHumanHorse.Contains(GetHorse(Player.human, i, j)))
+                                if (IsValidMove(player, p.Row, p.Col, i, j))
                                 {
                                     mlistMove.Add("" + p.Row + p.Col + i + j);
                                 }
@@ -1646,7 +1639,7 @@ namespace cochiemthanh_commandline
             {
                 if (currentPlayer == Player.human)
                 {
-                    String oldMove = "";
+                    String oldHorse = "--";
                     String move = "";
                     int count = 2;
                     while (count-- > 0)
@@ -1654,9 +1647,9 @@ namespace cochiemthanh_commandline
                         do
                         {
                             move = GetHumanMove();
-                        } while (oldMove.Equals(move));
+                        } while (oldHorse.Equals("" + move[0] + move[1]));
                         UpdateHumanHorsePos(move);
-                        oldMove = move;
+                        oldHorse = "" + move[2] + move[3];
 
                         //covert char to int
                         int move_0 = mapCharToInt[(char)move[0]];
@@ -1703,17 +1696,25 @@ namespace cochiemthanh_commandline
                 }
                 else if (currentPlayer == Player.machine)
                 {
-                    String oldMove = "";
+                    String oldHorse = "--";
                     String move = "";
-                    int count = 2;
+                    int count = 2;                    
                     while (count-- > 0)
                     {
                         do
                         {
                             move = GetMachineMove(Player.machine);
-                        } while (oldMove.Equals(move));                        
+                        } while (oldHorse.Equals("" + move[0] + move[1]));
                         UpdateMachineHorsePos(move);
-                        oldMove = move;
+                        oldHorse = "" + move[2] + move[3];                        
+                        if (count == 0)
+                        {
+                            prevHorse = null;
+                        } 
+                        else
+                        {
+                            prevHorse = GetHorse(mapCharToInt[oldHorse[0]], mapCharToInt[oldHorse[1]]);
+                        }                        
 
                         //covert char to int
                         int move_0 = mapCharToInt[(char)move[0]];
