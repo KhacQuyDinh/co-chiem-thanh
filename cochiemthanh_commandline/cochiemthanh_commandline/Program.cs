@@ -1191,7 +1191,7 @@ namespace cochiemthanh_commandline
             if (O_human.Row == wall_machine.Row && O_human.Col == wall_machine.Col
                || P_human.Row == wall_machine.Row && P_human.Col == wall_machine.Col
                || Q_human.Row == wall_machine.Row && Q_human.Col == wall_machine.Col
-               || listMachineHorse.Count == 0)
+               || listMachineHorse.Count == 1)
             {
                 if (currentPlayer == Player.machine) return lose_number;
                 if (currentPlayer == Player.human) return win_number;
@@ -1200,7 +1200,7 @@ namespace cochiemthanh_commandline
             if (K_machine.Row == wall_human.Row && K_machine.Col == wall_human.Col
                 || L_machine.Row == wall_human.Row && L_machine.Col == wall_human.Col
                 || M_machine.Row == wall_human.Row && M_machine.Col == wall_human.Col
-                || listHumanHorse.Count == 0)
+                || listHumanHorse.Count == 1)
             {
                 if (currentPlayer == Player.machine) return win_number;
                 if (currentPlayer == Player.human) return lose_number;
@@ -1744,6 +1744,7 @@ namespace cochiemthanh_commandline
 
                         //print boardgame
                         PrintBoard();
+                        Console.WriteLine(""+ mapCharRow[move_0] + mapCharCol[move_1] + mapCharRow[move_2] + mapCharCol[move_3]);
 
                         //debug
                         PrintPosAllHorses();
