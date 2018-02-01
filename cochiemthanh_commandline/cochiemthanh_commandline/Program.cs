@@ -7,7 +7,7 @@ namespace cochiemthanh_commandline
     public class Program
     {
         //to calculate the present number of step
-        int num_step = 0;
+        //int num_step = 0;
         int limit_step = 0;
 
         //status gameboard desc
@@ -777,7 +777,7 @@ namespace cochiemthanh_commandline
                 && (rw_0 - 1) > -1
                 && !boardgame[rw_0 - 1, col_0].Equals(empty_str))
             {
-                return true;
+                return false;
             }
             //position #3 : 150 and 210 degree
             if ((dis_row == 1 || dis_row == -1) && dis_col == -2
@@ -1759,11 +1759,11 @@ namespace cochiemthanh_commandline
                     currentPlayer = Player.human;
                 }
 
-                num_step = (num_step + 1) % 11;
-                if (num_step == limit_step)
-                {
-                    max_depth = (max_depth + 2) % 6;
-                }
+                //num_step = (num_step + 1) % 11;
+                //if (num_step == limit_step)
+                //{
+                //    max_depth = (max_depth + 2) % 6;
+                //}
             }
         }
 
