@@ -5,11 +5,7 @@ using System.Diagnostics;
 namespace cochiemthanh_commandline
 {
     public class Program
-    {
-        //to calculate the present number of step
-        //int num_step = 0;
-        //int limit_step = 0;
-
+    {        
         //status gameboard desc
         public const int bad_move_number = -1;
         public const int raw_number = -1;
@@ -89,18 +85,13 @@ namespace cochiemthanh_commandline
 
         //player String desc
         public const String player_human_str = "Nguoi";
-        public const String player_machine_str = "May";
-
-        //public Piece currentHorse = null;
+        public const String player_machine_str = "May";        
 
         //empty means having neither machine's troop or human's troop
         public const String empty_str = "  ";
 
         public const int max_row = 8;
-        public const int max_col = 8;
-
-        //public int[] attackRate = new int[] { 10, 20, 30, 40, 50 };
-        //public int[] defenceRate = new int[] { 10, 20, 30, 40, 50 };
+        public const int max_col = 8;        
 
         public Piece wall_human = null;
         public Piece wall_machine = null;
@@ -118,9 +109,7 @@ namespace cochiemthanh_commandline
         public Piece M_machine = null;
 
         public List<Piece> listMachineHorse = new List<Piece>();
-        public List<Piece> listHumanHorse = new List<Piece>();
-        //private int num_human_horse = 0;
-        //private int num_machine_horse = 0;
+        public List<Piece> listHumanHorse = new List<Piece>();  
 
         public void InitListHorses(bool isMachineFirst)
         {
@@ -396,7 +385,7 @@ namespace cochiemthanh_commandline
             }
             else if (!isBeCheckedPlaneBeforeMove && isBeCheckedPlaneAfterMove)
             {
-                minusScore += EvaluateRate.fail_oppt_check_plane;
+                minusScore += EvaluateRate.fail_block_oppt_check_plane;
             }
 
             // oppt checkmate our wall
@@ -408,7 +397,7 @@ namespace cochiemthanh_commandline
             }
             else if (!isBeCheckedWallBeforeMove && isBlockCheckedWallAfterMove)
             {
-                minusScore += EvaluateRate.fail_oppt_check_wall;
+                minusScore += EvaluateRate.fail_block_oppt_check_wall;
             }
 
             //conclusion
@@ -728,103 +717,71 @@ namespace cochiemthanh_commandline
             //guarantee you are moving a horse
             if (GetHorse(ourPlayer, rw_0, col_0) == null) return false;
 
-            //guarantee the position move to is valid place that means cannot move to oppenent horse because it cannot be eaten.
-            //if (((ourPlayer == Player.human)
-            //    && !boardgame[rw_1, col_1].Equals(plane_machine.Label)
-            //    && !boardgame[rw_1, col_1].Equals(wall_machine.Label)
-            //    && !boardgame[rw_1, col_1].Equals(empty_str))
-            //    ||
-            //    ((ourPlayer == Player.machine)
-            //    && !boardgame[rw_1, col_1].Equals(plane_human.Label)
-            //    && !boardgame[rw_1, col_1].Equals(wall_human.Label))
-            //    && !boardgame[rw_1, col_1].Equals(empty_str))
-            //{
-            //    return false;
-            //}
-
-            ////guarantee the position move to is valid place. 
-            //Cannot move to the player's wall, the plane or the horses.
-            if ((ourPlayer == Player.human)
-                && (rw_1 == wall_human.Row && col_1 == wall_human.Col
-                //|| rw_1 == plane_human.Row && col_1 == plane_human.Col
-                || listHumanHorse.Contains(GetHorse(Player.human, rw_1, col_1)))
-                //|| IsProtectedMachineWall() && (rw_1 == wall_machine.Row) && (col_1 == wall_machine.Col))
-                ||
-                (ourPlayer == Player.machine)
-                && (rw_1 == wall_machine.Row && col_1 == wall_machine.Col
-                //|| rw_1 == plane_machine.Row && col_1 == plane_machine.Col                
-                || listMachineHorse.Contains(GetHorse(Player.machine, rw_1, col_1))))
-            //|| IsProtectedHumanWall() && (rw_1 == wall_human.Row) && (col_1 == wall_human.Col))
+            //guarantee the position move to is valid place. 
+            //Cannot move to the player's wall or the horses.
+            Piece our_wall = (ourPlayer == Player.human) ? wall_human : wall_machine;
+            List<Piece> listOurHorse = (ourPlayer == Player.human) ? listHumanHorse : listMachineHorse;
+            if ((rw_1 == our_wall.Row && col_1 == our_wall.Col
+                || listOurHorse.Contains(GetHorse(ourPlayer, rw_1, col_1))))
             {
                 return false;
             }
 
-            //guarantee not be checkmated after moving a horse to there
-            //player == Player.machine to sure not get benefit for opponent but if training for two machine fight each other, we need del it.            
-            //if (player == Player.machine)
-            //{
-            //    bool isCheckMated;
-            //    String originLabel = boardgame[rw_0, col_0];
-            //    String desLabel = boardgame[rw_1, col_1];
-            //    boardgame[rw_1, col_1] = originLabel;
-            //    if (rw_0 == plane_human.Row && col_0 == plane_human.Col)
-            //    {
-            //        boardgame[rw_0, col_0] = plane_human.Label;
-            //    }
-            //    else
-            //    {
-            //        boardgame[rw_0, col_0] = empty_str;
-            //    }
+            bool isInOpptPlane = false;
+            //if the horse from the plane of opponent:
+            //The horse cannot be blocked by oppt horses
+            //And broken the origin horse path 
+            //Cannot move to oppt_wall and oppt_horse and oppt_plane(self satisfy)
+            Piece opptMachine = (ourPlayer == Player.human) ? plane_machine : plane_human;
+            Piece oppt_wall = (ourPlayer == Player.human) ? wall_machine : wall_human;
+            Player oppt = (ourPlayer == Player.human) ? Player.machine : Player.human;
+            List<Piece> listOpptHorse = (ourPlayer == Player.human) ? listMachineHorse : listHumanHorse;
+            if (rw_0 == opptMachine.Row && col_0 == opptMachine.Col)
+            {
+                isInOpptPlane = true;
+                if ((rw_1 == oppt_wall.Row && col_1 == oppt_wall.Col)
+                    || listOpptHorse.Contains(GetHorse(oppt, rw_1,col_1)))
+                {
+                    return false;
+                }
+            }
 
-            //    isCheckMated = IsDefeatOppt(currentPlayer);
-
-            //    boardgame[rw_1, col_1] = desLabel;
-            //    boardgame[rw_0, col_0] = originLabel;
-
-            //    if (isCheckMated) return false;
-            //}
-
-            //if the horse from the plane of opponent then we don't need guarantee for 
-            //the horse be or not be blocked and unlimit the horse path
-            if (!((ourPlayer == Player.human
-                && rw_0 == plane_machine.Row
-                && col_0 == plane_machine.Col)
-                ||
-                (ourPlayer == Player.machine
-                && rw_0 == plane_human.Row
-                && col_0 == plane_human.Col)))
+            if (!isInOpptPlane)
             {
                 //the path does not belong to the horse
                 if (!((Math.Abs(rw_1 - rw_0) == 1 && Math.Abs(col_1 - col_0) == 2)
                     || (Math.Abs(rw_1 - rw_0) == 2 && Math.Abs(col_1 - col_0) == 1))) return false;
-            }
 
-            //guarantee the moving in not be blocked by another horse and not be checkmated for 8 piece pos but group into 4
-            int dis_row = rw_1 - rw_0;
-            int dis_col = col_1 - col_0;
-            //position #1 : 30 and -30 degree
-            if ((dis_row == 1 || dis_row == -1) && dis_col == 2
-                && !boardgame[rw_0, col_0 + 1].Equals(empty_str))
-            {
-                return false;
-            }
-            //position #2 : 60 and 120 degree
-            if (dis_row == -2 && (dis_col == 1 || dis_col == -1)
-                && !boardgame[rw_0 - 1, col_0].Equals(empty_str))
-            {
-                return false;
-            }
-            //position #3 : 150 and 210 degree
-            if ((dis_row == 1 || dis_row == -1) && dis_col == -2
-                && !boardgame[rw_0, col_0 - 1].Equals(empty_str))
-            {
-                return false;
-            }
-            //position #4 : 240 and 300 degree
-            if (dis_row == 2 && (dis_col == -1 || dis_col == 1)
-                && !boardgame[rw_0 + 1, col_0].Equals(empty_str))
-            {
-                return false;
+
+                //guarantee the moving in not be blocked by another horse
+                //and not be checkmated for 8 piece pos but group into 4
+
+                int dis_row = rw_1 - rw_0;
+                int dis_col = col_1 - col_0;
+                //position #1 : 30 and -30 degree
+                if ((dis_row == 1 || dis_row == -1) && dis_col == 2
+                    && !boardgame[rw_0, col_0 + 1].Equals(empty_str))
+                {
+                    return false;
+                }
+                //position #2 : 60 and 120 degree
+                if (dis_row == -2 && (dis_col == 1 || dis_col == -1)
+                    && !boardgame[rw_0 - 1, col_0].Equals(empty_str))
+                {
+                    return false;
+                }
+                //position #3 : 150 and 210 degree
+                if ((dis_row == 1 || dis_row == -1) && dis_col == -2
+                    && !boardgame[rw_0, col_0 - 1].Equals(empty_str))
+                {
+                    return false;
+                }
+                //position #4 : 240 and 300 degree
+                if (dis_row == 2 && (dis_col == -1 || dis_col == 1)
+                    && !boardgame[rw_0 + 1, col_0].Equals(empty_str))
+                {
+                    return false;
+                }
             }
 
             return true;
@@ -1087,55 +1044,7 @@ namespace cochiemthanh_commandline
             }
 
             return listNeedPointBlock;
-        }
-
-
-        /// <summary>
-        /// check how many opponent's horse will be blocked after player move its horse to a specific position (row,col)
-        /// </summary>
-        /// <param name = "row" > row </ param >
-        /// < param name="col">column</param>
-        /// <param name = "player" > player who move the horse</param>
-        /// <returns></returns>
-        //private int CountBlockOpponent(int row, int col, Player player)
-        //{
-        //    int numBlockedOpptHorse = 0;
-
-        //    if (player == Player.human)
-        //    {
-        //        foreach (Piece horse in listMachineHorse)
-        //        {
-        //            if (col == horse.Col)
-        //            {
-        //                if (row - horse.Row == 1 && max_row - horse.Row > 2) numBlockedOpptHorse++;
-        //                else if (row - horse.Row == -1 && horse.Row > 1) numBlockedOpptHorse++;
-        //            }
-        //            else if (row == horse.Row)
-        //            {
-        //                if (col - horse.Col == 1 && max_col - horse.Col > 2) numBlockedOpptHorse++;
-        //                else if (col - horse.Col == -1 && horse.Col > 1) numBlockedOpptHorse++;
-        //            }
-        //        }
-        //    }
-        //    else if (player == Player.machine)
-        //    {
-        //        foreach (Piece horse in listHumanHorse)
-        //        {
-        //            if (col == horse.Col)
-        //            {
-        //                if (row - horse.Row == 1 && max_row - horse.Row > 2) numBlockedOpptHorse++;
-        //                else if (row - horse.Row == -1 && horse.Row > 1) numBlockedOpptHorse++;
-        //            }
-        //            else if (row == horse.Row)
-        //            {
-        //                if (col - horse.Col == 1 && max_col - horse.Col > 2) numBlockedOpptHorse++;
-        //                else if (col - horse.Col == -1 && horse.Col > 1) numBlockedOpptHorse++;
-        //            }
-        //        }
-        //    }
-
-        //    return numBlockedOpptHorse;
-        //}
+        }     
 
         /// <summary>
         /// check whether a player move its horse to a specific pos (row,col) could be in opponent plane or not
@@ -1154,64 +1063,13 @@ namespace cochiemthanh_commandline
             {
                 return row == plane_machine.Row && col == plane_machine.Col;
             }
-        }
-
-
-        ///// <summary>
-        ///// get list block checkmate for the player after one moving from (row_1,col_1) to (row_2,col_2)
-        ///// </summary>
-        ///// <param name="row_1"></param>
-        ///// <param name="col_1"></param>
-        ///// <param name="row_2"></param>
-        ///// <param name="col_2"></param>
-        ///// <param name="player"></param>
-        ///// <returns></returns>
-        //public List<String> GetListSecondBlockCheckmate(int row_1, int col_1, int row_2, int col_2, Player player)
-        //{
-        //    //simulate the horse moves...
-        //    String originLabel = boardgame[row_1, col_1];
-        //    String desLabel = boardgame[row_2, col_2];
-        //    boardgame[row_2, col_2] = originLabel;
-        //    if (row_1 == plane_human.Row && col_1 == plane_human.Col)
-        //    {
-        //        boardgame[row_1, col_1] = plane_human.Label;
-        //    }
-        //    else
-        //    {
-        //        boardgame[row_1, col_1] = empty_str;
-        //    }
-
-        //    List<String> listNdBlockCheckmate = GetListFirstBlockCheckmate(player);
-
-        //    boardgame[row_2, col_2] = desLabel;
-        //    boardgame[row_1, col_1] = originLabel;
-
-        //    return listNdBlockCheckmate;
-        //}
+        }        
 
         /// <summary>
         /// check status of current gameboard: win - lose - raw
         /// </summary>        
         public int CheckGameBoard()
-        {
-            //if (boardgame[O_human.Row, O_human.Col].Equals(wall_machine.Label)
-            //   || boardgame[P_human.Row, P_human.Col].Equals(wall_machine.Label)
-            //   || boardgame[Q_human.Row, Q_human.Col].Equals(wall_machine.Label)
-            //   || num_machine_horse == 0)
-            //{
-            //    if (currentPlayer == Player.machine) return lose_number;
-            //    if (currentPlayer == Player.human) return win_number;
-            //}
-
-            //if (boardgame[K_machine.Row, K_machine.Col].Equals(wall_human.Label)
-            //    || boardgame[L_machine.Row, L_machine.Col].Equals(wall_human.Label)
-            //    || boardgame[M_machine.Row, M_machine.Col].Equals(wall_human.Label)
-            //    || num_human_horse == 0)
-            //{
-            //    if (currentPlayer == Player.machine) return win_number;
-            //    if (currentPlayer == Player.human) return lose_number;
-            //}
-
+        {           
             if (O_human.Row == wall_machine.Row && O_human.Col == wall_machine.Col
                || P_human.Row == wall_machine.Row && P_human.Col == wall_machine.Col
                || Q_human.Row == wall_machine.Row && Q_human.Col == wall_machine.Col
@@ -1638,8 +1496,6 @@ namespace cochiemthanh_commandline
 
                         //check whether eat machine(opponent) horse
                         Piece oppMachineHorse = GetHorse(Player.machine, move_2, move_3);
-                        //bool isAteOppHorse = listMachineHorse.Contains(oppMachineHorse);
-                        //if (isAteOppHorse) listMachineHorse.Remove(oppMachineHorse);
                         listMachineHorse.Remove(oppMachineHorse);
 
                         boardgame[move_2, move_3] = boardgame[move_0, move_1];
@@ -1703,8 +1559,6 @@ namespace cochiemthanh_commandline
 
                         //check whether eat human(opponent) horse
                         Piece oppHumanHorse = GetHorse(Player.human, move_2, move_3);
-                        //bool isAteOppHorse = listHumanHorse.Contains(oppHumanHorse);
-                        //if (isAteOppHorse) listHumanHorse.Remove(oppHumanHorse);
                         listHumanHorse.Remove(oppHumanHorse);
 
                         boardgame[move_2, move_3] = boardgame[move_0, move_1];
@@ -1742,12 +1596,6 @@ namespace cochiemthanh_commandline
                     }
                     currentPlayer = Player.human;
                 }
-
-                //num_step = (num_step + 1) % 11;
-                //if (num_step == limit_step)
-                //{
-                //    max_depth = (max_depth + 2) % 6;
-                //}
             }
         }
 
