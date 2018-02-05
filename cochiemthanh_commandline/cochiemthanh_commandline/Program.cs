@@ -5,7 +5,7 @@ using System.Diagnostics;
 namespace cochiemthanh_commandline
 {
     public class Program
-    {        
+    {
         //status gameboard desc
         public const int bad_move_number = -1;
         public const int raw_number = -1;
@@ -85,13 +85,13 @@ namespace cochiemthanh_commandline
 
         //player String desc
         public const String player_human_str = "Nguoi";
-        public const String player_machine_str = "May";        
+        public const String player_machine_str = "May";
 
         //empty means having neither machine's troop or human's troop
         public const String empty_str = "  ";
 
         public const int max_row = 8;
-        public const int max_col = 8;        
+        public const int max_col = 8;
 
         public Piece wall_human = null;
         public Piece wall_machine = null;
@@ -109,7 +109,7 @@ namespace cochiemthanh_commandline
         public Piece M_machine = null;
 
         public List<Piece> listMachineHorse = new List<Piece>();
-        public List<Piece> listHumanHorse = new List<Piece>();  
+        public List<Piece> listHumanHorse = new List<Piece>();
 
         public void InitListHorses(bool isMachineFirst)
         {
@@ -118,16 +118,16 @@ namespace cochiemthanh_commandline
                 wall_human = new Piece(7, 3, "TH");
                 wall_machine = new Piece(0, 4, "TH");
 
-                plane_human = new Piece(7, 4, "MB");                
+                plane_human = new Piece(7, 4, "MB");
                 plane_machine = new Piece(0, 3, "MB");
 
                 O_human = new Piece(7, 0, "O ");
                 P_human = new Piece(7, 3, "P ");
-                Q_human = new Piece(7, 7, "Q ");               
-                
+                Q_human = new Piece(7, 7, "Q ");
+
                 K_machine = new Piece(0, 0, "K ");
                 L_machine = new Piece(0, 4, "L ");
-                M_machine = new Piece(0, 7, "M ");                
+                M_machine = new Piece(0, 7, "M ");
             }
             else
             {
@@ -341,7 +341,7 @@ namespace cochiemthanh_commandline
             //block all path move to plane
             if (IsAbsBlockToPlane(row_1, col_1, row_2, col_2, mine, opponent))
             {
-                defenceScore += EvaluateRate.abs_block_move_to_player_plane;
+                defenceScore += EvaluateRate.abs_block_move_to_our_plane;
             }
             else
             {
@@ -350,11 +350,12 @@ namespace cochiemthanh_commandline
                     = GetNumOfDecreasePathToPlane(row_1, col_1, row_2, col_2, mine, opponent);
                 if (decreasePathToPlaneAmount > 0)
                 {
-                    defenceScore += decreasePathToPlaneAmount * EvaluateRate.bonus_block_move_to_plane;
+                    defenceScore += decreasePathToPlaneAmount 
+                        * EvaluateRate.bonus_block_move_to_plane;
                 }
             }
 
-            //move to path to oppt plane
+            //move to path of oppt plane
             List<String> listPathToOpptPlane = GetListPathToOpptPlane(mine, opponent);
             if (listPathToOpptPlane.Contains("" + row_2 + col_2))
             {
@@ -381,27 +382,52 @@ namespace cochiemthanh_commandline
             }
 
             // oppt checkmate our plane            
-            bool isBeCheckedPlaneBeforeMove = IsOpptCheckPlane(mine, opponent);
-            bool isBeCheckedPlaneAfterMove = IsOpptCheckPlane(mine, opponent, move);
-            if (isBeCheckedPlaneBeforeMove && !isBeCheckedPlaneAfterMove)
+            int num_can_cplane_1 = NumPointOpptCanCheckPlane(mine, opponent);
+            int num_can_cplane_2 = NumPointOpptCanCheckPlane(mine, opponent, move);
+            bool isCanCheckedPlaneBeforeMove = num_can_cplane_1 > 0;
+            bool isCanCheckedPlaneAfterMove = num_can_cplane_2 > 0;
+            if (isCanCheckedPlaneBeforeMove && !isCanCheckedPlaneAfterMove)
             {
                 defenceScore += EvaluateRate.prevent_oppt_check_plane;
             }
-            else if (!isBeCheckedPlaneBeforeMove && isBeCheckedPlaneAfterMove)
+            else if (!isCanCheckedPlaneBeforeMove && isCanCheckedPlaneAfterMove)
             {
                 minusScore += EvaluateRate.fail_block_oppt_check_plane;
             }
+            else if (num_can_cplane_1 - num_can_cplane_2 > 0)
+            {
+                defenceScore += EvaluateRate.bonus_block_path_to_check_plane;
+            }
+            else if (num_can_cplane_1 - num_can_cplane_2 < 0)
+            {
+                minusScore += EvaluateRate.minus_block_path_to_plane;
+            }
 
             // oppt checkmate our wall
-            bool isBeCheckedWallBeforeMove = IsOpptCheckWall(mine, opponent);
-            bool isBlockCheckedWallAfterMove = IsOpptCheckWall(mine, opponent, move);
-            if (isBeCheckedWallBeforeMove && !isBlockCheckedWallAfterMove)
+            int num_can_checkmate_1 = NumPointOpptCanCheckWall(mine, opponent);
+            int num_can_checkmate_2 = NumPointOpptCanCheckWall(mine, opponent, move);
+            bool isCanCheckedWallBeforeMove = num_can_checkmate_1 > 0;
+            bool isCanCheckedWallAfterMove = num_can_checkmate_2 > 0;
+            if (isCanCheckedWallBeforeMove && !isCanCheckedWallAfterMove)
             {
                 defenceScore += EvaluateRate.prevent_oppt_check_wall;
             }
-            else if (!isBeCheckedWallBeforeMove && isBlockCheckedWallAfterMove)
+            else if (!isCanCheckedWallBeforeMove && isCanCheckedWallAfterMove)
             {
                 minusScore += EvaluateRate.fail_block_oppt_check_wall;
+            }
+            else if (num_can_checkmate_1 - num_can_checkmate_2 > 0)
+            {
+                defenceScore += EvaluateRate.bonus_block_path_to_checkmate;
+            }
+            else if (num_can_checkmate_1 - num_can_checkmate_2 < 0)
+            {
+                minusScore += EvaluateRate.minus_block_path_to_checkmate;
+            }
+
+            if (IsInWall(row_1, col_1, mine))
+            {
+                minusScore += EvaluateRate.auto_decrease_defence;
             }
 
             //conclusion
@@ -416,9 +442,9 @@ namespace cochiemthanh_commandline
         /// <param name="ourPlayer"></param>
         /// <param name="oppt"></param>
         /// <returns></returns>
-        private bool IsOpptCheckWall(Player ourPlayer, Player oppt)
+        private int NumPointOpptCanCheckWall(Player ourPlayer, Player oppt)
         {
-            bool result = false;
+            int result = 0;
 
             List<Piece> listOurHorse = (ourPlayer == Player.human) ? listHumanHorse : listMachineHorse;
             List<String> listOpptMove = GetListPossibleMove(oppt, ourPlayer);
@@ -438,12 +464,8 @@ namespace cochiemthanh_commandline
 
                 //unsimulate
                 UnSimulateMove(memorySimulation);
-
-                if (listPoint.Count > 0)
-                {
-                    result = true;
-                    break;
-                }
+                
+                result += listPoint.Count;                                    
             }
 
             return result;
@@ -462,9 +484,9 @@ namespace cochiemthanh_commandline
         /// <param name="oppt"></param>
         /// <param name="our_move"></param>
         /// <returns></returns>
-        private bool IsOpptCheckWall(Player ourPlayer, Player oppt, String our_move)
+        private int NumPointOpptCanCheckWall(Player ourPlayer, Player oppt, String our_move)
         {
-            bool result = false;
+            int result = 0;
 
             List<Piece> listOpptHorse = (oppt == Player.human) ? listHumanHorse : listMachineHorse;
             List<Piece> listOurHorse = (ourPlayer == Player.human) ? listHumanHorse : listMachineHorse;
@@ -495,11 +517,7 @@ namespace cochiemthanh_commandline
                 //unsimulate
                 UnSimulateMove(memorySimulation);
 
-                if (list.Count > 0)
-                {
-                    result = true;
-                    break;
-                }
+                result += list.Count;
             }
 
             //unsimulate
@@ -514,9 +532,9 @@ namespace cochiemthanh_commandline
         /// <param name="ourPlayer"></param>
         /// <param name="oppt"></param>
         /// <returns></returns>
-        private bool IsOpptCheckPlane(Player ourPlayer, Player oppt)
+        private int NumPointOpptCanCheckPlane(Player ourPlayer, Player oppt)
         {
-            bool result = false;
+            int result = 0;
 
             List<Piece> listOurHorse = (ourPlayer == Player.human) ? listHumanHorse : listMachineHorse;
             List<Piece> listOpptHorse = (oppt == Player.human) ? listHumanHorse : listMachineHorse;
@@ -538,11 +556,7 @@ namespace cochiemthanh_commandline
                 //unsimulate
                 UnSimulateMove(memorySimulation);
 
-                if (list.Count > 0)
-                {
-                    result = true;
-                    break;
-                }
+                result += list.Count;
             }
 
             return result;
@@ -555,9 +569,9 @@ namespace cochiemthanh_commandline
         /// <param name="oppt"></param>
         /// <param name="our_move"></param>
         /// <returns></returns>
-        private bool IsOpptCheckPlane(Player ourPlayer, Player oppt, String our_move)
+        private int NumPointOpptCanCheckPlane(Player ourPlayer, Player oppt, String our_move)
         {
-            bool result = false;
+            int result = 0;
 
             List<Piece> listOurHorse = (ourPlayer == Player.human) ? listHumanHorse : listMachineHorse;
             List<Piece> listOpptHorse = (oppt == Player.human) ? listHumanHorse : listMachineHorse;
@@ -588,11 +602,7 @@ namespace cochiemthanh_commandline
                 //unsimulate
                 UnSimulateMove(memorySimulation);
 
-                if (list.Count > 0)
-                {
-                    result = true;
-                    break;
-                }
+                result += list.Count;
             }
 
             //unsimulate
@@ -733,19 +743,33 @@ namespace cochiemthanh_commandline
             //if the horse from the plane of opponent:
             //The horse cannot be blocked by oppt horses
             //And broken the origin horse move 
-            //Cannot move to oppt_wall and oppt_horse and oppt_plane(self satisfy)
+            //Cannot move to oppt_wall and oppt_horse and oppt_plane and our horses(self satisfy)
+            //cannot checkmate oppt_wall
             Piece opptMachine = (ourPlayer == Player.human) ? plane_machine : plane_human;
-            Piece oppt_wall = (ourPlayer == Player.human) ? wall_machine : wall_human;
             Player oppt = (ourPlayer == Player.human) ? Player.machine : Player.human;
+            Piece oppt_wall = (ourPlayer == Player.human) ? wall_machine : wall_human;
             List<Piece> listOpptHorse = (ourPlayer == Player.human) ? listMachineHorse : listHumanHorse;
             if (rw_0 == opptMachine.Row && col_0 == opptMachine.Col)
             {
+                //The horse cannot be blocked by oppt horses
+                //And broken the origin horse move 
                 isInOpptPlane = true;
-                if ((rw_1 == oppt_wall.Row && col_1 == oppt_wall.Col)
-                    || listOpptHorse.Contains(GetHorse(oppt, rw_1,col_1)))
+
+                //Cannot move to oppt_wall and oppt_horse and oppt_plane and our horses(self satisfy)
+                if (IsInWall(rw_1, col_1, oppt)
+                    || IsInPlane(rw_1, col_1, oppt)
+                    || listOpptHorse.Contains(GetHorse(oppt, rw_1, col_1)))
                 {
                     return false;
                 }
+
+                //cannot checkmate oppt_wall
+                if (GetListToWall(oppt_wall)
+                    .Contains("" + rw_1 + col_1 + oppt_wall.Row + oppt_wall.Col))
+                {
+                    return false;
+                }
+
             }
 
             if (!isInOpptPlane)
@@ -789,6 +813,57 @@ namespace cochiemthanh_commandline
             return true;
         }
 
+        private List<String> GetListToWall(Piece wall)
+        {
+            List<String> list = new List<String>();
+            if (IsInBound(wall.Row - 1, wall.Col - 2))
+            {
+                list.Add("" + (wall.Row - 1) + (wall.Col - 2) + wall.Row + wall.Col);
+            }
+
+            if (IsInBound(wall.Row - 1, wall.Col + 2))
+            {
+                list.Add("" + (wall.Row - 1) + (wall.Col + 2) + wall.Row + wall.Col);
+            }
+
+            if (IsInBound(wall.Row - 2, wall.Col - 1))
+            {
+                list.Add("" + (wall.Row - 2) + (wall.Col - 1) + wall.Row + wall.Col);
+            }
+
+            if (IsInBound(wall.Row - 2, wall.Col + 1))
+            {
+                list.Add("" + (wall.Row - 2) + (wall.Col + 1) + wall.Row + wall.Col);
+            }
+
+            if (IsInBound(wall.Row + 1, wall.Col - 2))
+            {
+                list.Add("" + (wall.Row + 1) + (wall.Col - 2) + wall.Row + wall.Col);
+            }
+
+            if (IsInBound(wall.Row + 1, wall.Col + 2))
+            {
+                list.Add("" + (wall.Row + 1) + (wall.Col + 2) + wall.Row + wall.Col);
+            }
+
+            if (IsInBound(wall.Row + 2, wall.Col - 1))
+            {
+                list.Add("" + (wall.Row + 2) + (wall.Col - 1) + wall.Row + wall.Col);
+            }
+
+            if (IsInBound(wall.Row + 2, wall.Col + 1))
+            {
+                list.Add("" + (wall.Row + 2) + (wall.Col + 1) + wall.Row + wall.Col);
+            }
+
+            return list;
+        }
+
+        private bool IsInBound(int rw_1, int col_1)
+        {
+            if (rw_1 < 0 || rw_1 >= max_row || col_1 < 0 || col_1 >= max_col) return false;
+            return true;
+        }
         /// <summary>
         /// get a horse at the pos(row,col)
         /// </summary>
@@ -1009,9 +1084,9 @@ namespace cochiemthanh_commandline
 
             return listNeedPointBlock;
         }
+
         /// get list move to the player plane in one more step
         /// </summary>
-
         /// <summary>
         /// <param name="player"></param>
         /// <returns></returns>
@@ -1046,16 +1121,17 @@ namespace cochiemthanh_commandline
             }
 
             return listNeedPointBlock;
-        }     
+        }
 
         /// <summary>
         /// check status of current gameboard: win - lose - raw
         /// </summary>        
         public int CheckGameBoard()
-        {           
+        {
             if (O_human.Row == wall_machine.Row && O_human.Col == wall_machine.Col
                || P_human.Row == wall_machine.Row && P_human.Col == wall_machine.Col
                || Q_human.Row == wall_machine.Row && Q_human.Col == wall_machine.Col
+               //rule one horse - you lose
                || listMachineHorse.Count == 1)
             {
                 if (currentPlayer == Player.machine) return lose_number;
@@ -1065,6 +1141,7 @@ namespace cochiemthanh_commandline
             if (K_machine.Row == wall_human.Row && K_machine.Col == wall_human.Col
                 || L_machine.Row == wall_human.Row && L_machine.Col == wall_human.Col
                 || M_machine.Row == wall_human.Row && M_machine.Col == wall_human.Col
+                //rule one horse - you lose
                 || listHumanHorse.Count == 1)
             {
                 if (currentPlayer == Player.machine) return win_number;
@@ -1173,7 +1250,7 @@ namespace cochiemthanh_commandline
                         List<Piece> listOpptHorse = (oppt == Player.human) ? listHumanHorse : listMachineHorse;
                         paramSimulation[list_oppt_horse_index] = listOpptHorse;
                         //simulate
-                        memorySimulation = SimulateMove(paramSimulation);                       
+                        memorySimulation = SimulateMove(paramSimulation);
                     }
 
                     //generate next move
@@ -1283,7 +1360,7 @@ namespace cochiemthanh_commandline
             Piece playerWall = (player == Player.human) ? wall_human : wall_machine;
             return (row == playerWall.Row) && (col == playerWall.Col);
         }
-        
+
         /// <summary>
         /// get all possible moves with condition checkmate
         /// </summary>
@@ -1323,7 +1400,7 @@ namespace cochiemthanh_commandline
         /// <param name="p"></param>
         /// <returns></returns>
         private List<String> GetListPossibleMove(Player ourPlayer, Player oppt, String p)
-        {            
+        {
             //prepare params
             List<Object> paramSimulation = new List<Object>() { null, null, null, null };
             paramSimulation[move_index] = p;
@@ -1424,12 +1501,14 @@ namespace cochiemthanh_commandline
 
                         boardgame[move_2, move_3] = boardgame[move_0, move_1];
 
-                        if (IsInPlane(move_0, move_1, Player.human) || IsInPlane(move_0, move_1, Player.machine))
+                        if (IsInPlane(move_0, move_1, Player.human)
+                            || IsInPlane(move_0, move_1, Player.machine))
                         {
                             string plane_signal = plane_machine.Label;
                             boardgame[move_0, move_1] = plane_signal;
                         }
-                        else if (IsInWall(move_0, move_1, Player.human) || IsInWall(move_0, move_1, Player.machine))
+                        else if (IsInWall(move_0, move_1, Player.human)
+                            || IsInWall(move_0, move_1, Player.machine))
                         {
                             string wall_signal = wall_machine.Label;
                             boardgame[move_0, move_1] = wall_signal;
@@ -1521,7 +1600,7 @@ namespace cochiemthanh_commandline
                             return;
                         }
 
-                        Console.Write("Enter:"); 
+                        Console.Write("Enter:");
                         Console.ReadLine();
                     }
                     currentPlayer = Player.human;
