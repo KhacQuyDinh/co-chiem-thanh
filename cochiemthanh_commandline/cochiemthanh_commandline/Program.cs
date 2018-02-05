@@ -102,28 +102,61 @@ namespace cochiemthanh_commandline
         //public int[] attackRate = new int[] { 10, 20, 30, 40, 50 };
         //public int[] defenceRate = new int[] { 10, 20, 30, 40, 50 };
 
-        public Piece wall_human = new Piece(0, 4, "TH");
-        public Piece wall_machine = new Piece(7, 3, "TH");
-        public Piece plane_human = new Piece(0, 3, "MB");
-        public Piece plane_machine = new Piece(7, 4, "MB");
+        public Piece wall_human = null;
+        public Piece wall_machine = null;
+        public Piece plane_human = null;
+        public Piece plane_machine = null;
 
         //human's horses        
-        public Piece O_human = new Piece(0, 0, "O ");
-        public Piece P_human = new Piece(0, 4, "P ");
-        public Piece Q_human = new Piece(0, 7, "Q ");
+        public Piece O_human = null;
+        public Piece P_human = null;
+        public Piece Q_human = null;
 
         //machine's horses        
-        public Piece K_machine = new Piece(7, 0, "K ");
-        public Piece L_machine = new Piece(7, 3, "L ");
-        public Piece M_machine = new Piece(7, 7, "M ");
+        public Piece K_machine = null;
+        public Piece L_machine = null;
+        public Piece M_machine = null;
 
         public List<Piece> listMachineHorse = new List<Piece>();
         public List<Piece> listHumanHorse = new List<Piece>();
         //private int num_human_horse = 0;
         //private int num_machine_horse = 0;
 
-        public void InitListHorses()
+        public void InitListHorses(bool isMachineFirst)
         {
+            if (isMachineFirst)
+            {
+                wall_human = new Piece(7, 3, "TH");
+                wall_machine = new Piece(0, 4, "TH");
+
+                plane_human = new Piece(7, 4, "MB");                
+                plane_machine = new Piece(0, 3, "MB");
+
+                O_human = new Piece(7, 0, "O ");
+                P_human = new Piece(7, 3, "P ");
+                Q_human = new Piece(7, 7, "Q ");               
+                
+                K_machine = new Piece(0, 0, "K ");
+                L_machine = new Piece(0, 4, "L ");
+                M_machine = new Piece(0, 7, "M ");                
+            }
+            else
+            {
+                wall_human = new Piece(0, 4, "TH");
+                wall_machine = new Piece(7, 3, "TH");
+
+                plane_human = new Piece(0, 3, "MB");
+                plane_machine = new Piece(7, 4, "MB");
+
+                O_human = new Piece(0, 0, "O ");
+                P_human = new Piece(0, 4, "P ");
+                Q_human = new Piece(0, 7, "Q ");
+
+                K_machine = new Piece(7, 0, "K ");
+                L_machine = new Piece(7, 3, "L ");
+                M_machine = new Piece(7, 7, "M ");
+            }
+
             //list human horses
             listHumanHorse.Add(O_human);
             listHumanHorse.Add(P_human);
@@ -133,6 +166,8 @@ namespace cochiemthanh_commandline
             listMachineHorse.Add(K_machine);
             listMachineHorse.Add(L_machine);
             listMachineHorse.Add(M_machine);
+
+            ResetBoardGame();
         }
 
         public String[,] boardgame = new String[max_row, max_col];
@@ -393,7 +428,7 @@ namespace cochiemthanh_commandline
             bool result = false;
 
             List<Piece> listOurHorse = (ourPlayer == Player.human) ? listHumanHorse : listMachineHorse;
-            List<String> listOpptMove = GetListPossibleMove(oppt);
+            List<String> listOpptMove = GetListPossibleMove(oppt, ourPlayer);
             foreach (String move in listOpptMove)
             {
                 //prepare params
@@ -449,7 +484,7 @@ namespace cochiemthanh_commandline
             //simulate
             List<Object> memorySimulationOurPlayer = SimulateMove(paramSimulationOurPlayer);
 
-            List<String> listOpptMove = GetListPossibleMove(oppt);
+            List<String> listOpptMove = GetListPossibleMove(oppt, ourPlayer);
             foreach (String move in listOpptMove)
             {
                 //prepare params
@@ -492,7 +527,7 @@ namespace cochiemthanh_commandline
 
             List<Piece> listOurHorse = (ourPlayer == Player.human) ? listHumanHorse : listMachineHorse;
             List<Piece> listOpptHorse = (oppt == Player.human) ? listHumanHorse : listMachineHorse;
-            List<String> listOpptMove = GetListPossibleMove(oppt);
+            List<String> listOpptMove = GetListPossibleMove(oppt, ourPlayer);
             foreach (String move in listOpptMove)
             {
                 //prepare params
@@ -542,7 +577,7 @@ namespace cochiemthanh_commandline
             //simulate
             List<Object> memorySimulationOurPlayer = SimulateMove(paramSimulationOurPlayer);
 
-            List<String> listOpptMove = GetListPossibleMove(oppt);
+            List<String> listOpptMove = GetListPossibleMove(oppt, ourPlayer);
             foreach (String move in listOpptMove)
             {
                 //prepare params
@@ -652,7 +687,8 @@ namespace cochiemthanh_commandline
 
         private bool IsLostHorse(int row_2, int col_2, Player oppt)
         {
-            List<String> listMoveOpp = GetListPossibleMove(oppt);
+            Player ourPlayer = (oppt == Player.machine) ? Player.human : Player.machine;
+            List<String> listMoveOpp = GetListPossibleMove(oppt, ourPlayer);
             foreach (String moveOpp in listMoveOpp)
             {
                 if (mapCharToInt[moveOpp[2]] == row_2 && mapCharToInt[moveOpp[3]] == col_2)
@@ -827,26 +863,14 @@ namespace cochiemthanh_commandline
         /// <param name="row"></param>
         /// <param name="col"></param>
         /// <returns></returns>
-        private Piece GetHorse(Player player, int row, int col)
+        private Piece GetHorse(Player ourPlayer, int row, int col)
         {
-            if (player == Player.machine)
+            List<Piece> listOurHorse = (ourPlayer == Player.machine) ? listMachineHorse : listHumanHorse;
+            foreach (Piece p in listOurHorse)
             {
-                foreach (Piece p in listMachineHorse)
+                if (p.Row == row && p.Col == col)
                 {
-                    if (p.Row == row && p.Col == col)
-                    {
-                        return p;
-                    }
-                }
-            }
-            else
-            {
-                foreach (Piece p in listHumanHorse)
-                {
-                    if (p.Row == row && p.Col == col)
-                    {
-                        return p;
-                    }
+                    return p;
                 }
             }
 
@@ -1206,8 +1230,8 @@ namespace cochiemthanh_commandline
                 if (currentPlayer == Player.human) return lose_number;
             }
 
-            if (GetListPossibleMove(Player.human).Count == 0
-                && GetListPossibleMove(Player.machine).Count == 0) return raw_number;
+            if (GetListPossibleMove(Player.human, Player.machine).Count == 0
+                && GetListPossibleMove(Player.machine, Player.human).Count == 0) return raw_number;
 
             return live_game_number;
         }
@@ -1272,7 +1296,7 @@ namespace cochiemthanh_commandline
             Player oppt = isMaximizePlayer ? Player.human : Player.machine;
 
             //check end condition for the resurcive func
-            List<String> possibleMoves = GetListPossibleMove(ourPlayer);
+            List<String> possibleMoves = GetListPossibleMove(ourPlayer, oppt);
             if (depth == max_depth || possibleMoves.Count == 0)
             {
                 //CalEBoard for a specific postion (row,col) after simulate the horse moving to there               
@@ -1482,75 +1506,30 @@ namespace cochiemthanh_commandline
         /// </summary>
         /// <param name="Player">list posible moves of this player</param>
         /// <returns></returns>
-        private List<String> GetListPossibleMove(Player player)
+        /// 
+        ///Can optimize this function by saperate cases
+        private List<String> GetListPossibleMove(Player ourPlayer, Player oppt)
         {
+            Piece our_wall = (ourPlayer == Player.machine) ? wall_machine : wall_human;
+            List<Piece> listOpptHorse = (ourPlayer == Player.machine) ? listHumanHorse : listMachineHorse;
+            List<Piece> listOurHorse = (ourPlayer == Player.machine) ? listMachineHorse : listHumanHorse;
             List<String> mlistMove = new List<String>();
 
-            if (player == Player.human)
-            {
-                //if wall is eaten or no more horse to move
-                if (listMachineHorse.Contains(GetHorse(Player.machine, wall_human.Row, wall_human.Col))
-                    || listHumanHorse.Count == 0) return mlistMove;
+            //if wall is eaten by any oppt horse or no more horse to move
+            if (listOpptHorse.Contains(GetHorse(oppt, our_wall.Row, our_wall.Col))
+                || listOurHorse.Count == 0) return mlistMove;
 
-                foreach (Piece p in listHumanHorse)
-                {
-                    //transfer all if in oppenent plane
-                    if (IsInOpptPlane(p.Row, p.Col, Player.machine))
-                    {
-                        for (int i = 0; i < max_row; i++)
-                            for (int j = 0; j < max_col; j++)
-                            {
-                                if (IsValidMove(player, p.Row, p.Col, i, j))
-                                {
-                                    mlistMove.Add("" + p.Row + p.Col + i + j);
-                                }
-                            }
-                    }
-                    else
-                    {
-                        if (IsValidMove(player, p.Row, p.Col, p.Row - 1, p.Col + 2)) mlistMove.Add("" + p.Row + p.Col + (p.Row - 1) + (p.Col + 2));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row - 2, p.Col + 1)) mlistMove.Add("" + p.Row + p.Col + (p.Row - 2) + (p.Col + 1));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row - 2, p.Col - 1)) mlistMove.Add("" + p.Row + p.Col + (p.Row - 2) + (p.Col - 1));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row - 1, p.Col - 2)) mlistMove.Add("" + p.Row + p.Col + (p.Row - 1) + (p.Col - 2));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row + 1, p.Col - 2)) mlistMove.Add("" + p.Row + p.Col + (p.Row + 1) + (p.Col - 2));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row + 2, p.Col - 1)) mlistMove.Add("" + p.Row + p.Col + (p.Row + 2) + (p.Col - 1));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row + 2, p.Col + 1)) mlistMove.Add("" + p.Row + p.Col + (p.Row + 2) + (p.Col + 1));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row + 1, p.Col + 2)) mlistMove.Add("" + p.Row + p.Col + (p.Row + 1) + (p.Col + 2));
-                    }
-                }
-            }
-            else if (player == Player.machine)
+            foreach (Piece p in listOurHorse)
             {
-                //if wall is eaten or no more horse to move
-                if (listHumanHorse.Contains(GetHorse(Player.human, wall_machine.Row, wall_machine.Col))
-                    || listMachineHorse.Count == 0) return mlistMove;
-
-                foreach (Piece p in listMachineHorse)
-                {
-                    //transfer all if in oppenent plane
-                    if (IsInOpptPlane(p.Row, p.Col, Player.human))
+                //transfer all            
+                for (int i = 0; i < max_row; i++)
+                    for (int j = 0; j < max_col; j++)
                     {
-                        for (int i = 0; i < max_row; i++)
-                            for (int j = 0; j < max_col; j++)
-                            {
-                                if (IsValidMove(player, p.Row, p.Col, i, j))
-                                {
-                                    mlistMove.Add("" + p.Row + p.Col + i + j);
-                                }
-                            }
+                        if (IsValidMove(ourPlayer, p.Row, p.Col, i, j))
+                        {
+                            mlistMove.Add("" + p.Row + p.Col + i + j);
+                        }
                     }
-                    else
-                    {
-                        if (IsValidMove(player, p.Row, p.Col, p.Row - 1, p.Col + 2)) mlistMove.Add("" + p.Row + p.Col + (p.Row - 1) + (p.Col + 2));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row - 2, p.Col + 1)) mlistMove.Add("" + p.Row + p.Col + (p.Row - 2) + (p.Col + 1));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row - 2, p.Col - 1)) mlistMove.Add("" + p.Row + p.Col + (p.Row - 2) + (p.Col - 1));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row - 1, p.Col - 2)) mlistMove.Add("" + p.Row + p.Col + (p.Row - 1) + (p.Col - 2));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row + 1, p.Col - 2)) mlistMove.Add("" + p.Row + p.Col + (p.Row + 1) + (p.Col - 2));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row + 2, p.Col - 1)) mlistMove.Add("" + p.Row + p.Col + (p.Row + 2) + (p.Col - 1));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row + 2, p.Col + 1)) mlistMove.Add("" + p.Row + p.Col + (p.Row + 2) + (p.Col + 1));
-                        if (IsValidMove(player, p.Row, p.Col, p.Row + 1, p.Col + 2)) mlistMove.Add("" + p.Row + p.Col + (p.Row + 1) + (p.Col + 2));
-                    }
-                }
             }
             return mlistMove;
         }
@@ -1574,7 +1553,7 @@ namespace cochiemthanh_commandline
             List<Object> memorySimulation = SimulateMove(paramSimulation);
 
             //get list posible move
-            List<String> listPosibleMove = GetListPossibleMove(ourPlayer);
+            List<String> listPosibleMove = GetListPossibleMove(ourPlayer, oppt);
 
             //unsimulate
             UnSimulateMove(memorySimulation);
@@ -1588,6 +1567,8 @@ namespace cochiemthanh_commandline
         /// <returns></returns>
         public String GetHumanMove()
         {
+            Console.WriteLine("Nguoi (O-P-Q)");
+            Console.WriteLine("May (K-L-M)");
             Console.Write("Wating your move (ex. 2a3h): ");
             String move;
             while (true)
@@ -1625,8 +1606,6 @@ namespace cochiemthanh_commandline
         /// </summary>        
         public void GameBoard()
         {
-            ResetBoardGame();
-            InitListHorses();
             InitmapId();
             InitmapCharCol();
             InitmapCharRow();
@@ -1758,6 +1737,7 @@ namespace cochiemthanh_commandline
                             return;
                         }
 
+                        Console.Write("Enter:"); 
                         Console.ReadLine();
                     }
                     currentPlayer = Player.human;
@@ -1837,9 +1817,7 @@ namespace cochiemthanh_commandline
         //consider...
         private void InitFirstStep()
         {
-            PrintBoard();
-
-            Console.WriteLine("\nNguoi danh truoc (nhan 1) hoac May danh truoc (nhan 2)");
+            Console.WriteLine("\nNguoi danh truoc (O-P-Q) (nhan 1) hoac May danh truoc (K-L-M) (nhan 2)");
             Console.Write("Wating your command: ");
             int firstPlayerId;
             while (true)
@@ -1854,7 +1832,19 @@ namespace cochiemthanh_commandline
                 Console.Write("[Error] command! Please try again: ");
             }
 
-            currentPlayer = (firstPlayerId == (int)Player.machine) ? Player.machine : Player.human;
+            //init horse and board depends on who firstPlayer is
+            if (firstPlayerId == (int)Player.machine)
+            {
+                currentPlayer = Player.machine;
+                InitListHorses(true);
+            }
+            else
+            {
+                currentPlayer = Player.human;
+                InitListHorses(false);
+            }
+
+            PrintBoard();
         }
 
         public static void Main(String[] args)
