@@ -8,7 +8,7 @@ namespace cochiemthanh_commandline
     {
         //to calculate the present number of step
         //int num_step = 0;
-        int limit_step = 0;
+        //int limit_step = 0;
 
         //status gameboard desc
         public const int bad_move_number = -1;
@@ -49,8 +49,8 @@ namespace cochiemthanh_commandline
             mapCharCol.Add(2, 'c');
             mapCharCol.Add(3, 'd');
             mapCharCol.Add(4, 'e');
-            mapCharCol.Add(5, 'f');
             mapCharCol.Add(6, 'g');
+            mapCharCol.Add(5, 'f');
             mapCharCol.Add(7, 'h');
         }
 
@@ -710,15 +710,15 @@ namespace cochiemthanh_commandline
             //Cannot move to the player's wall, the plane or the horses.
             if ((ourPlayer == Player.human)
                 && (rw_1 == wall_human.Row && col_1 == wall_human.Col
-                || rw_1 == plane_human.Row && col_1 == plane_human.Col
-                || listHumanHorse.Contains(GetHorse(Player.human, rw_1, col_1))
-                || IsProtectedMachineWall() && (rw_1 == wall_machine.Row) && (col_1 == wall_machine.Col))
+                //|| rw_1 == plane_human.Row && col_1 == plane_human.Col
+                || listHumanHorse.Contains(GetHorse(Player.human, rw_1, col_1)))
+                //|| IsProtectedMachineWall() && (rw_1 == wall_machine.Row) && (col_1 == wall_machine.Col))
                 ||
                 (ourPlayer == Player.machine)
                 && (rw_1 == wall_machine.Row && col_1 == wall_machine.Col
-                || rw_1 == plane_machine.Row && col_1 == plane_machine.Col
-                || IsProtectedHumanWall() && (rw_1 == wall_human.Row) && (col_1 == wall_human.Col)
+                //|| rw_1 == plane_machine.Row && col_1 == plane_machine.Col                
                 || listMachineHorse.Contains(GetHorse(Player.machine, rw_1, col_1))))
+            //|| IsProtectedHumanWall() && (rw_1 == wall_human.Row) && (col_1 == wall_human.Col))
             {
                 return false;
             }
@@ -767,25 +767,25 @@ namespace cochiemthanh_commandline
             int dis_row = rw_1 - rw_0;
             int dis_col = col_1 - col_0;
             //position #1 : 30 and -30 degree
-            if ((dis_row == 1 || dis_row == -1) && dis_col == 2                
+            if ((dis_row == 1 || dis_row == -1) && dis_col == 2
                 && !boardgame[rw_0, col_0 + 1].Equals(empty_str))
             {
                 return false;
             }
             //position #2 : 60 and 120 degree
-            if (dis_row == -2 && (dis_col == 1 || dis_col == -1)                
+            if (dis_row == -2 && (dis_col == 1 || dis_col == -1)
                 && !boardgame[rw_0 - 1, col_0].Equals(empty_str))
             {
                 return false;
             }
             //position #3 : 150 and 210 degree
-            if ((dis_row == 1 || dis_row == -1) && dis_col == -2                
+            if ((dis_row == 1 || dis_row == -1) && dis_col == -2
                 && !boardgame[rw_0, col_0 - 1].Equals(empty_str))
             {
                 return false;
             }
             //position #4 : 240 and 300 degree
-            if (dis_row == 2 && (dis_col == -1 || dis_col == 1)                
+            if (dis_row == 2 && (dis_col == -1 || dis_col == 1)
                 && !boardgame[rw_0 + 1, col_0].Equals(empty_str))
             {
                 return false;
@@ -1252,7 +1252,7 @@ namespace cochiemthanh_commandline
         /// <param name="Player"></param>
         /// </summary>        
         public String GetMachineMove(Player player)
-        {            
+        {
             //determine getMove for which player            
             bool isMaximizePlayer = (player == Player.machine) ? true : false;
             int depth = 0;
@@ -1499,7 +1499,7 @@ namespace cochiemthanh_commandline
                     {
                         for (int i = 0; i < max_row; i++)
                             for (int j = 0; j < max_col; j++)
-                            {                                                         
+                            {
                                 if (IsValidMove(player, p.Row, p.Col, i, j))
                                 {
                                     mlistMove.Add("" + p.Row + p.Col + i + j);
@@ -1633,7 +1633,7 @@ namespace cochiemthanh_commandline
             InitmapCharToInt();
             InitFirstStep();
             max_depth = 1;
-            limit_step = 20;
+            //limit_step = 20;
 
             while (true)
             {
@@ -1698,7 +1698,7 @@ namespace cochiemthanh_commandline
                 {
                     String oldHorse = "--";
                     String move = "";
-                    int count = 2;                    
+                    int count = 2;
                     while (count-- > 0)
                     {
                         do
@@ -1706,15 +1706,15 @@ namespace cochiemthanh_commandline
                             move = GetMachineMove(Player.machine);
                         } while (oldHorse.Equals("" + move[0] + move[1]));
                         UpdateMachineHorsePos(move);
-                        oldHorse = "" + move[2] + move[3];                        
+                        oldHorse = "" + move[2] + move[3];
                         if (count == 0)
                         {
                             prevHorse = null;
-                        } 
+                        }
                         else
                         {
                             prevHorse = GetHorse(mapCharToInt[oldHorse[0]], mapCharToInt[oldHorse[1]]);
-                        }                        
+                        }
 
                         //covert char to int
                         int move_0 = mapCharToInt[(char)move[0]];
@@ -1744,7 +1744,7 @@ namespace cochiemthanh_commandline
 
                         //print boardgame
                         PrintBoard();
-                        Console.WriteLine(""+ mapCharRow[move_0] + mapCharCol[move_1] + mapCharRow[move_2] + mapCharCol[move_3]);
+                        Console.WriteLine("" + boardgame[move_2, move_3] + "(" + mapCharRow[move_0] + mapCharCol[move_1] + mapCharRow[move_2] + mapCharCol[move_3] + ")");
 
                         //debug
                         PrintPosAllHorses();
@@ -1757,6 +1757,8 @@ namespace cochiemthanh_commandline
                             Console.ReadLine();
                             return;
                         }
+
+                        Console.ReadLine();
                     }
                     currentPlayer = Player.human;
                 }
