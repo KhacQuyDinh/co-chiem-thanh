@@ -204,15 +204,19 @@ namespace cochiemthanh_commandline
             //case eat opponent horse
             if (nextMoveInOppHorse) listOpptHorse.Remove(opptHorse);
 
-            if (ourPlayer == Player.machine)
+            if (IsInPlane(row_1, col_1, Player.human) || IsInPlane(row_1, col_1, Player.machine))
             {
-                if (row_1 == plane_human.Row && col_1 == plane_human.Col) boardgame[row_1, col_1] = plane_human.Label;
-                else boardgame[row_1, col_1] = empty_str;
+                string plane_signal = plane_machine.Label;
+                boardgame[row_1, col_1] = plane_signal;
             }
-            else if (ourPlayer == Player.human)
+            else if (IsInWall(row_1, col_1, Player.human) || IsInWall(row_1, col_1, Player.machine))
             {
-                if (row_1 == plane_machine.Row && col_1 == plane_machine.Col) boardgame[row_1, col_1] = plane_machine.Label;
-                else boardgame[row_1, col_1] = empty_str;
+                string wall_signal = wall_machine.Label;
+                boardgame[row_1, col_1] = wall_signal;
+            }
+            else
+            {
+                boardgame[row_1, col_1] = empty_str;
             }
 
             List<Object> result = new List<Object>() { null, null, null, null, null, null };
@@ -311,7 +315,7 @@ namespace cochiemthanh_commandline
             }
 
             //move to opponent plane
-            if (IsInOpptPlane(row_2, col_2, opponent))
+            if (IsInPlane(row_2, col_2, opponent))
             {
                 attackScore += EvaluateRate.moving_to_oppt_plane;
             }
@@ -708,7 +712,7 @@ namespace cochiemthanh_commandline
 
         public bool IsValidMove(Player ourPlayer, int rw_0, int col_0, int rw_1, int col_1)
         {
-            //moving the prev horse at a time
+            //prevent the player from moving the prev horse at a time
             if (prevHorse != null && rw_0 == prevHorse.Row && col_0 == prevHorse.Col) return false;
 
             //guarantee position of the piece is not beyound the bound of gameboards
@@ -718,11 +722,9 @@ namespace cochiemthanh_commandline
             if (GetHorse(ourPlayer, rw_0, col_0) == null) return false;
 
             //guarantee the position move to is valid place. 
-            //Cannot move to the player's wall or the horses.
-            Piece our_wall = (ourPlayer == Player.human) ? wall_human : wall_machine;
+            //Cannot move to player's horses.
             List<Piece> listOurHorse = (ourPlayer == Player.human) ? listHumanHorse : listMachineHorse;
-            if ((rw_1 == our_wall.Row && col_1 == our_wall.Col
-                || listOurHorse.Contains(GetHorse(ourPlayer, rw_1, col_1))))
+            if (listOurHorse.Contains(GetHorse(ourPlayer, rw_1, col_1)))
             {
                 return false;
             }
@@ -730,7 +732,7 @@ namespace cochiemthanh_commandline
             bool isInOpptPlane = false;
             //if the horse from the plane of opponent:
             //The horse cannot be blocked by oppt horses
-            //And broken the origin horse path 
+            //And broken the origin horse move 
             //Cannot move to oppt_wall and oppt_horse and oppt_plane(self satisfy)
             Piece opptMachine = (ourPlayer == Player.human) ? plane_machine : plane_human;
             Piece oppt_wall = (ourPlayer == Player.human) ? wall_machine : wall_human;
@@ -1047,25 +1049,6 @@ namespace cochiemthanh_commandline
         }     
 
         /// <summary>
-        /// check whether a player move its horse to a specific pos (row,col) could be in opponent plane or not
-        /// </summary>
-        /// <param name="row"></param>
-        /// <param name="col"></param>
-        /// <param name="player"></param>
-        /// <returns></returns>
-        public bool IsInOpptPlane(int row, int col, Player oppt)
-        {
-            if (oppt == Player.human)
-            {
-                return row == plane_human.Row && col == plane_human.Col;
-            }
-            else
-            {
-                return row == plane_machine.Row && col == plane_machine.Col;
-            }
-        }        
-
-        /// <summary>
         /// check status of current gameboard: win - lose - raw
         /// </summary>        
         public int CheckGameBoard()
@@ -1180,45 +1163,17 @@ namespace cochiemthanh_commandline
                         isSimulated = false;
                     }
 
-                    String originLabel = "";
-                    String desLabel = "";
-                    int p_0 = -1;
-                    int p_1 = -1;
-                    int p_2 = -1;
-                    int p_3 = -1;
-                    bool nextMoveInOppHorse = false;
-                    Piece opptHorse = null;
-
+                    List<Object> memorySimulation = null;
                     if (isSimulated)
                     {
-                        //convert char to int for p
-                        p_0 = mapCharToInt[(char)p[0]];
-                        p_1 = mapCharToInt[(char)p[1]];
-                        p_2 = mapCharToInt[(char)p[2]];
-                        p_3 = mapCharToInt[(char)p[3]];
-
-                        //update machine horse position
-                        UpdateMachineHorsePos("" + p_0 + p_1 + p_2 + p_3);
-
-                        //check whether (p_2,p_3) in opponent(human) horse
-                        opptHorse = GetHorse(Player.human, p_2, p_3);
-                        nextMoveInOppHorse = listHumanHorse.Contains(opptHorse);
-
-                        //case eat opponent(human) horse
-                        if (nextMoveInOppHorse) listHumanHorse.Remove(opptHorse);
-
-                        //simulate the horse moves
-                        originLabel = boardgame[p_0, p_1];
-                        desLabel = boardgame[p_2, p_3];
-                        boardgame[p_2, p_3] = originLabel;
-                        if (p_0 == plane_human.Row && p_1 == plane_human.Col)
-                        {
-                            boardgame[p_0, p_1] = plane_human.Label;
-                        }
-                        else
-                        {
-                            boardgame[p_0, p_1] = empty_str;
-                        }
+                        List<Object> paramSimulation = new List<Object>() { null, null, null, null };
+                        paramSimulation[move_index] = p;
+                        paramSimulation[our_player_index] = ourPlayer;
+                        paramSimulation[oppt_index] = oppt;
+                        List<Piece> listOpptHorse = (oppt == Player.human) ? listHumanHorse : listMachineHorse;
+                        paramSimulation[list_oppt_horse_index] = listOpptHorse;
+                        //simulate
+                        memorySimulation = SimulateMove(paramSimulation);                       
                     }
 
                     //generate next move
@@ -1233,14 +1188,7 @@ namespace cochiemthanh_commandline
 
                     if (isSimulated)
                     {
-                        //revert simulation
-                        boardgame[p_2, p_3] = desLabel;
-                        boardgame[p_0, p_1] = originLabel;
-                        //revert case eat opponent(human) horse
-                        if (nextMoveInOppHorse) listHumanHorse.Add(opptHorse);
-
-                        //update machine horse position
-                        UpdateMachineHorsePos("" + p_2 + p_3 + p_0 + p_1);
+                        UnSimulateMove(memorySimulation);
                     }
 
                     //calculate maximum value for maximize player
@@ -1249,6 +1197,7 @@ namespace cochiemthanh_commandline
                     {
                         Debug.WriteLine(alpha.max < bestVal);
                     }
+
                     //update final move when alpha changed
                     if (alpha.max < bestVal)
                     {
@@ -1277,45 +1226,17 @@ namespace cochiemthanh_commandline
                         isSimulated = false;
                     }
 
-                    String originLabel = "";
-                    String desLabel = "";
-                    int p_0 = -1;
-                    int p_1 = -1;
-                    int p_2 = -1;
-                    int p_3 = -1;
-                    bool nextMoveInOppHorse = false;
-                    Piece oppHorse = null;
-
+                    List<Object> memorySimulation = null;
                     if (isSimulated)
                     {
-                        //convert char to int for p
-                        p_0 = mapCharToInt[(char)p[0]];
-                        p_1 = mapCharToInt[(char)p[1]];
-                        p_2 = mapCharToInt[(char)p[2]];
-                        p_3 = mapCharToInt[(char)p[3]];
-
-                        //update human horse position
-                        UpdateHumanHorsePos("" + p_0 + p_1 + p_2 + p_3);
-
-                        //check whether (p_2,p_3) in opponent(machine) horse
-                        oppHorse = GetHorse(Player.machine, p_2, p_3);
-                        nextMoveInOppHorse = listMachineHorse.Contains(oppHorse);
-
-                        //case eat opponent(machine) horse
-                        if (nextMoveInOppHorse) listMachineHorse.Remove(oppHorse);
-
-                        //simulate the horse moves
-                        originLabel = boardgame[p_0, p_1];
-                        desLabel = boardgame[p_2, p_3];
-                        boardgame[p_2, p_3] = originLabel;
-                        if (p_0 == plane_machine.Row && p_1 == plane_machine.Col)
-                        {
-                            boardgame[p_0, p_1] = plane_machine.Label;
-                        }
-                        else
-                        {
-                            boardgame[p_0, p_1] = empty_str;
-                        }
+                        List<Object> paramSimulation = new List<Object>() { null, null, null, null };
+                        paramSimulation[move_index] = p;
+                        paramSimulation[our_player_index] = ourPlayer;
+                        paramSimulation[oppt_index] = oppt;
+                        List<Piece> listOpptHorse = (oppt == Player.human) ? listHumanHorse : listMachineHorse;
+                        paramSimulation[list_oppt_horse_index] = listOpptHorse;
+                        //simulate
+                        memorySimulation = SimulateMove(paramSimulation);
                     }
 
                     //generate next move
@@ -1330,21 +1251,13 @@ namespace cochiemthanh_commandline
 
                     if (isSimulated)
                     {
-                        //revert simulation
-                        boardgame[p_2, p_3] = desLabel;
-                        boardgame[p_0, p_1] = originLabel;
-
-                        //revert case eat opponent horse
-                        if (nextMoveInOppHorse) listMachineHorse.Add(oppHorse);
-
-                        //update human horse position
-                        UpdateHumanHorsePos("" + p_2 + p_3 + p_0 + p_1);
+                        UnSimulateMove(memorySimulation);
                     }
 
                     //calculate minimum value for minimize player
                     bestVal = Math.Min(value, min_inf);
 
-                    //update final move when alpha changed
+                    //update final move when beta changed
                     if (beta.min > bestVal)
                     {
                         beta.min = bestVal;
@@ -1359,6 +1272,18 @@ namespace cochiemthanh_commandline
             }
         }
 
+        private bool IsInPlane(int row, int col, Player player)
+        {
+            Piece playerPlane = (player == Player.human) ? plane_human : plane_machine;
+            return (row == playerPlane.Row) && (col == playerPlane.Col);
+        }
+
+        private bool IsInWall(int row, int col, Player player)
+        {
+            Piece playerWall = (player == Player.human) ? wall_human : wall_machine;
+            return (row == playerWall.Row) && (col == playerWall.Col);
+        }
+        
         /// <summary>
         /// get all possible moves with condition checkmate
         /// </summary>
@@ -1398,8 +1323,7 @@ namespace cochiemthanh_commandline
         /// <param name="p"></param>
         /// <returns></returns>
         private List<String> GetListPossibleMove(Player ourPlayer, Player oppt, String p)
-        {
-            //prepare params
+        {            
             //prepare params
             List<Object> paramSimulation = new List<Object>() { null, null, null, null };
             paramSimulation[move_index] = p;
@@ -1499,13 +1423,16 @@ namespace cochiemthanh_commandline
                         listMachineHorse.Remove(oppMachineHorse);
 
                         boardgame[move_2, move_3] = boardgame[move_0, move_1];
-                        if (move_0 == plane_machine.Row && move_1 == plane_machine.Col)
+
+                        if (IsInPlane(move_0, move_1, Player.human) || IsInPlane(move_0, move_1, Player.machine))
                         {
-                            boardgame[move_0, move_1] = plane_machine.Label;
+                            string plane_signal = plane_machine.Label;
+                            boardgame[move_0, move_1] = plane_signal;
                         }
-                        else if (move_0 == wall_human.Row && move_1 == wall_human.Col)
+                        else if (IsInWall(move_0, move_1, Player.human) || IsInWall(move_0, move_1, Player.machine))
                         {
-                            boardgame[move_0, move_1] = wall_human.Label;
+                            string wall_signal = wall_machine.Label;
+                            boardgame[move_0, move_1] = wall_signal;
                         }
                         else
                         {
@@ -1562,13 +1489,16 @@ namespace cochiemthanh_commandline
                         listHumanHorse.Remove(oppHumanHorse);
 
                         boardgame[move_2, move_3] = boardgame[move_0, move_1];
-                        if (move_0 == plane_human.Row && move_1 == plane_human.Col)
+
+                        if (IsInPlane(move_0, move_1, Player.human) || IsInPlane(move_0, move_1, Player.machine))
                         {
-                            boardgame[move_0, move_1] = plane_human.Label;
+                            string plane_signal = plane_machine.Label;
+                            boardgame[move_0, move_1] = plane_signal;
                         }
-                        else if (move_0 == wall_machine.Row && move_1 == wall_machine.Col)
+                        else if (IsInWall(move_0, move_1, Player.human) || IsInWall(move_0, move_1, Player.machine))
                         {
-                            boardgame[move_0, move_1] = wall_machine.Label;
+                            string wall_signal = wall_machine.Label;
+                            boardgame[move_0, move_1] = wall_signal;
                         }
                         else
                         {
