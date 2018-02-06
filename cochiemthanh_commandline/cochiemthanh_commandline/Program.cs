@@ -623,6 +623,13 @@ namespace cochiemthanh_commandline
             return GetListSrcToDes(ourPlayer, opptWall.Row, opptWall.Col);
         }
 
+        /// <summary>
+        /// get a list valid move to oppt_des_row and col
+        /// </summary>
+        /// <param name="ourPlayer"></param>
+        /// <param name="oppt_des_row"></param>
+        /// <param name="oppt_des_col"></param>
+        /// <returns></returns>
         private List<String> GetListSrcToDes(Player ourPlayer, int oppt_des_row, int oppt_des_col)
         {
             List<String> list = new List<String>();
@@ -813,6 +820,11 @@ namespace cochiemthanh_commandline
             return true;
         }
 
+        /// <summary>
+        /// get list move to wall with just condition: the move in bound
+        /// </summary>
+        /// <param name="wall"></param>
+        /// <returns></returns>
         private List<String> GetListToWall(Piece wall)
         {
             List<String> list = new List<String>();
@@ -1132,7 +1144,8 @@ namespace cochiemthanh_commandline
                || P_human.Row == wall_machine.Row && P_human.Col == wall_machine.Col
                || Q_human.Row == wall_machine.Row && Q_human.Col == wall_machine.Col
                //rule one horse - you lose
-               || listMachineHorse.Count == 1)
+               || ((listMachineHorse.Count == 1)
+               && (GetListSrcToDes(Player.machine, wall_human.Row, wall_human.Col).Count == 0)))
             {
                 if (currentPlayer == Player.machine) return lose_number;
                 if (currentPlayer == Player.human) return win_number;
@@ -1142,7 +1155,8 @@ namespace cochiemthanh_commandline
                 || L_machine.Row == wall_human.Row && L_machine.Col == wall_human.Col
                 || M_machine.Row == wall_human.Row && M_machine.Col == wall_human.Col
                 //rule one horse - you lose
-                || listHumanHorse.Count == 1)
+                || ((listHumanHorse.Count == 1)                
+               && (GetListSrcToDes(Player.human, wall_machine.Row, wall_machine.Col).Count == 0)))
             {
                 if (currentPlayer == Player.machine) return win_number;
                 if (currentPlayer == Player.human) return lose_number;
