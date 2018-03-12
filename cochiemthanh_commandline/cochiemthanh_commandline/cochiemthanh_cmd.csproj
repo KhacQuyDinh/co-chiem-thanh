@@ -50,11 +50,5 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Cach_thay_doi_ban_co.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ham_luong_gia.txt" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

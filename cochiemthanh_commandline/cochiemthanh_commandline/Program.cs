@@ -12,6 +12,8 @@ namespace cochiemthanh_commandline
         public const int win_number = 0;
         public const int lose_number = 1;
         public const int live_game_number = 3;
+        private bool isStepInOpptPlane = false;
+        private string planedHorse = String.Empty;
 
         public Dictionary<char, int> mapId = new Dictionary<char, int>();
         public Dictionary<int, char> mapCharCol = new Dictionary<int, char>();
@@ -752,15 +754,16 @@ namespace cochiemthanh_commandline
             //And broken the origin horse move 
             //Cannot move to oppt_wall and oppt_horse and oppt_plane and our horses(self satisfy)
             //cannot checkmate oppt_wall
-            Piece opptMachine = (ourPlayer == Player.human) ? plane_machine : plane_human;
+            Piece opptPlane = (ourPlayer == Player.human) ? plane_machine : plane_human;
             Player oppt = (ourPlayer == Player.human) ? Player.machine : Player.human;
             Piece oppt_wall = (ourPlayer == Player.human) ? wall_machine : wall_human;
             List<Piece> listOpptHorse = (ourPlayer == Player.human) ? listMachineHorse : listHumanHorse;
-            if (rw_0 == opptMachine.Row && col_0 == opptMachine.Col)
+            if (rw_0 == opptPlane.Row && col_0 == opptPlane.Col)
             {
                 //The horse cannot be blocked by oppt horses
                 //And broken the origin horse move 
                 isInOpptPlane = true;
+                this.isStepInOpptPlane = true;
 
                 //Cannot move to oppt_wall and oppt_horse and oppt_plane and our horses(self satisfy)
                 if (IsInWall(rw_1, col_1, oppt)
@@ -793,25 +796,25 @@ namespace cochiemthanh_commandline
                 int dis_col = col_1 - col_0;
                 //position #1 : 30 and -30 degree
                 if ((dis_row == 1 || dis_row == -1) && dis_col == 2
-                    && !boardgame[rw_0, col_0 + 1].Equals(empty_str))
+                    && GetHorse(rw_0, col_0 + 1) != null)
                 {
                     return false;
                 }
                 //position #2 : 60 and 120 degree
                 if (dis_row == -2 && (dis_col == 1 || dis_col == -1)
-                    && !boardgame[rw_0 - 1, col_0].Equals(empty_str))
+                    && GetHorse(rw_0 - 1, col_0) != null)
                 {
                     return false;
                 }
                 //position #3 : 150 and 210 degree
                 if ((dis_row == 1 || dis_row == -1) && dis_col == -2
-                    && !boardgame[rw_0, col_0 - 1].Equals(empty_str))
+                    && GetHorse(rw_0, col_0 - 1) != null)
                 {
                     return false;
                 }
                 //position #4 : 240 and 300 degree
                 if (dis_row == 2 && (dis_col == -1 || dis_col == 1)
-                    && !boardgame[rw_0 + 1, col_0].Equals(empty_str))
+                    && GetHorse(rw_0 + 1, col_0) != null)
                 {
                     return false;
                 }
@@ -1499,9 +1502,14 @@ namespace cochiemthanh_commandline
                         do
                         {
                             move = GetHumanMove();
-                        } while (oldHorse.Equals("" + move[0] + move[1]));
+                        } while ((oldHorse.Equals("" + move[0] + move[1]) && planedHorse.Equals(String.Empty))
+                        || (!planedHorse.Equals(String.Empty) && !planedHorse.Equals("" + move[0] + move[1])));
+
                         UpdateHumanHorsePos(move);
                         oldHorse = "" + move[2] + move[3];
+
+                        //reset planedHorse = the horse in the plane
+                        planedHorse = String.Empty;
 
                         //covert char to int
                         int move_0 = mapCharToInt[(char)move[0]];
@@ -1546,6 +1554,14 @@ namespace cochiemthanh_commandline
                             Console.ReadLine();
                             return;
                         }
+
+                        if (this.isStepInOpptPlane)
+                        {
+                            count++;
+                            //bug
+                            planedHorse = oldHorse;
+                            this.isStepInOpptPlane = false;
+                        }
                     }
                     currentPlayer = Player.machine;
                 }
@@ -1559,9 +1575,15 @@ namespace cochiemthanh_commandline
                         do
                         {
                             move = GetMachineMove(Player.machine);
-                        } while (oldHorse.Equals("" + move[0] + move[1]));
+                        } while ((oldHorse.Equals("" + move[0] + move[1]) && planedHorse.Equals(String.Empty))
+                        || (!planedHorse.Equals(String.Empty) && !planedHorse.Equals("" + move[0] + move[1])));
+
                         UpdateMachineHorsePos(move);
                         oldHorse = "" + move[2] + move[3];
+
+                        //reset planedHorse = the horse in the plane
+                        planedHorse = String.Empty;
+
                         if (count == 0)
                         {
                             prevHorse = null;
@@ -1612,6 +1634,14 @@ namespace cochiemthanh_commandline
                             Console.WriteLine(GetStatusMsg(statusGameBoard));
                             Console.ReadLine();
                             return;
+                        }
+
+                        if (this.isStepInOpptPlane)
+                        {
+                            count++;
+                            //bug
+                            planedHorse = oldHorse;
+                            this.isStepInOpptPlane = false;
                         }
 
                         Console.Write("Enter:");
